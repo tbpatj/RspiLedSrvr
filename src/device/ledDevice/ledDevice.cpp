@@ -3,7 +3,6 @@
 
 class LedDevice : public Device {
 private:
-    std::string name;
         //types are
         //0 for non-addressable LED
         //1 for addressable LED
@@ -22,9 +21,6 @@ private:
         int transitionSpeed;
 
 public:
-    // void setName(const std::string& newName) override {
-    //     name = newName;
-    // }
 
     void update() override {
         // implementation for updating a LedDevice
@@ -40,10 +36,20 @@ public:
         if (!data["settings"].is_null()) {
             settings.setData(data["settings"]);
         }
+        if(type == 0) pins.setData(data["pin_out"]);
+        if(type == 1) pins.setData(static_cast<int>(data["pin_out"]));
     }
 
-    void getJson() override {
+    json getJson() override {
         // implementation for getting json on a LedDevice
+        json data = {
+                {"name", name}, // Add a new key-value pair to the JSON object
+                {"type", type == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
+                {"settings", settings.getJson()},
+                // //depending on the type of the device the pinout will be different so change the response based on that.
+                {"pin_out", type == 1 ? static_cast<json>(pins.getAddressablePinout()) : static_cast<json>(pins.getNonAddressableJson())}
+            };
+        return data;
     }
 
     LedDevice(std::string newName, int newType) {
@@ -51,6 +57,15 @@ public:
         type = newType;
         // settings = new LedDeviceSettings("default", 0, "default", false);
         pins = LedDevicePins(0);
+    }
+    LedDevice(json data) {
+        try{
+            setData(data);
+        }catch(const json::exception& e){
+            std::cerr << "Error parsing JSON: " << e.what() << std::endl;
+            name = "default";
+            type = 0;
+        }
     }
 };
 

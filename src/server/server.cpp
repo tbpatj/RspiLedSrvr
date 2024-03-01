@@ -5,6 +5,6 @@
 void RunLedServer() {
     ServeClient();
     InitDeviceEndpoints();
-
+    std::cout << "Starting server" << std::endl;
     svr.listen("0.0.0.0", 3000);
 }

@@ -47,6 +47,16 @@ class LedDeviceSettings {
         power = data["power"].is_null() ? power : data["power"] == "on" ? true : false;
     }
 
+    json getJson() {
+        json data = {
+                {"name", name}, // Add a new key-value pair to the JSON object
+                {"type", type == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
+                {"mode", getStrFromMode()},
+                {"power", power ? "on" : "off"}
+            };
+        return data;
+    }
+
     LedDeviceSettings(std::string inName, int inType,int inMode, bool inPower) {
         name = inName;
         type = inType;

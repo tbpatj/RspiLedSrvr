@@ -10,19 +10,14 @@ using json = nlohmann::json;
 #include "./src/device/device.cpp"
 #include "./src/device/ledDevice/ledDevice.cpp"
 
+// global declaration of devices
+std::vector<std::unique_ptr<Device>> devices;
 
-// global declaration of variables
+// global declaration of server
 httplib::Server svr;
 #include "./src/server/server.cpp"
 
 int main(){
-    std::vector<std::unique_ptr<Device>> devices;
-
-    devices.push_back(std::make_unique<LedDevice>("Led1", 1));
-    //start the server on another thread
-    std::cout << "Starting server" << std::endl;
-
-    devices[0]->update();
     RunLedServer();
     // std::thread serverThread(RunLedServer);
     // std::ifstream f("example.json");
