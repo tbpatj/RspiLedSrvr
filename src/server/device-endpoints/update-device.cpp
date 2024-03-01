@@ -42,8 +42,8 @@ void InitUpdateDevice() {
                 res.set_content(response.dump(), "application/json");
                 return;
             }
-
-            json response = CreateResponse(true, "Device added successfully", "200", requestJson);
+            saveDevices();
+            json response = CreateResponse(true, "Device updated successfully", "200", requestJson);
             res.set_content(response.dump(), "application/json"); // Convert response to string and send as JSON
          }catch(const json::exception& e){
             std::cerr << "Error parsing JSON: " << e.what() << std::endl;

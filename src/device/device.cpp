@@ -12,6 +12,6 @@ class Device {
         };
         virtual std::string getName() {
             return name;
-            };
+        };
         // common methods for all devices
 };
