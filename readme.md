@@ -18,13 +18,16 @@ https://github.com/opencv/opencv/tree/4.x
 install using brew
 `brew install opencv`
 
+`brew install pkg-config`
+
 compiling will need \`pkg-config --cflags --libs opencv4\`
 
 ## Compiling
 
-compile script
+<!-- compile script
 `g++ main.cpp -o app -std=c++11`
 
-`g++ main.cpp -o app \`pkg-config --cflags --libs opencv4\``
+`g++ main.cpp -o app \`pkg-config --cflags --libs opencv4\`` -->
 
-g++ main.cpp -o app `pkg-config --cflags --libs opencv4` -std=c++11
+compile script
+g++ main.cpp -o app -I/usr/local/include/opencv4 -std=c++14 \`pkg-config --libs opencv4\`
