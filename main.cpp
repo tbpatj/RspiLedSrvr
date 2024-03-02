@@ -34,7 +34,8 @@ int main(){
     while(!captureDevice.isWindowClosed()){
         if(captureDevice.isCapturing){
             captureDevice.updateFrame();
-            captureDevice.show();
+            // captureDevice.show();
+            captureDevice.processFrame();
             if( cv::waitKey (30) >= 0) break;
         }
     }
