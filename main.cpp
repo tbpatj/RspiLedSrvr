@@ -8,9 +8,9 @@ using json = nlohmann::json;
 #include "./resources/httplib.h"
 
 //Debug varaibles
-const bool show_processed_image = false;
+const bool show_processed_image = true;
 const bool show_webcam_feed = false;
-const bool write_frame_proccessor_data = false;
+const bool write_frame_proccessor_data = true;
 
 #include "./src/utils/utils.cpp"
 
