@@ -1,1 +1,1 @@
-[{"name":"Test","pin_out":20,"settings":{"mode":"default","name":"custom","power":"off","type":"addressable"},"type":"addressable"}]
+[{"name":"Test","pin_out":20,"settings":{"mode":"default","name":"custom","power":"on","type":"addressable"},"type":"addressable"}]
