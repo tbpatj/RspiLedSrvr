@@ -8,7 +8,7 @@ class LedDeviceSettings {
     int getModeFromStr(std::string modeStr){
         if(modeStr == "default"){
             return 0;
-        } else if(modeStr == "rainbow"){
+        } else if(modeStr == "tv"){
             return 1;
         } else if(modeStr == "color"){
             return 2;
@@ -23,7 +23,7 @@ class LedDeviceSettings {
         if(mode == 0){
             return "default";
         } else if(mode == 1){
-            return "rainbow";
+            return "tv";
         } else if(mode == 2){
             return "color";
         } else if(mode == 3){

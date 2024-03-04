@@ -46,14 +46,15 @@ int main(){
     while(running == 1){
         if(captureDevice.isCapturing){
             captureDevice.updateFrame();
-            // captureDevice.show();
             captureDevice.processFrame();
-            if( cv::waitKey (30) >= 0) {
-                std::cout << "Closing" << std::endl;
-                break;
-            };
-        } else {
-             std::this_thread::sleep_for(std::chrono::seconds(1));
+            // if( cv::waitKey (30) >= 0) {
+            //     std::cout << "Closing" << std::endl;
+            //     break;
+            // };
+            
+        }
+        for (int i = 0; i < devices.size(); i++) {
+            devices[i]->update();
         }
     }
     saveDevices();

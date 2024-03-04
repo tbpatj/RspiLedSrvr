@@ -44,6 +44,23 @@ class CaptureDevice {
             cv::imshow("Webcam", frame);
         }
 
+        cv::Vec3b* getPrcsdRwFrmSide(std::string side){
+            if(side == "top") return frameProcessor.getProcessedSide(0);
+            else if(side == "bottom") return frameProcessor.getProcessedSide(1);
+            else if(side == "left") return frameProcessor.getProcessedSide(2);
+            else if(side == "right") return frameProcessor.getProcessedSide(3);
+            else return nullptr;
+        }
+        cv::Vec3b* getPrcsdRwFrmSide(int side){
+            if(side >= 0 && side <= 3) return frameProcessor.getProcessedSide(side);
+            else return nullptr;
+        }
+
+        int getIterations(int side){
+            if(side >= 0 && side <= 3) return frameProcessor.getIterations(side);
+            else return -1;
+        }
+
         void updateFrame(){
             if(isCapturing){
                 cap >> frame;

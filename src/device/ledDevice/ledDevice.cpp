@@ -24,7 +24,18 @@ public:
 
     void update() override {
         // implementation for updating a LedDevice
-        std::cout << name << std::endl;
+        if(settings.power){
+            if(type == 0) {
+                //update non-addressable leds
+            } else if(type == 1) {
+                //update addressable leds
+
+                //tv update mode
+                if(settings.mode == 1){
+                    updateLedTVStyle();
+                }
+            }
+        }
     }
 
     void setData(json data) override {
@@ -32,12 +43,38 @@ public:
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
         //set up the type of the device, if it's null then set it to non-addressable
         type = data["type"].is_null() ? type : (data["type"] == "addressable" ? 1 : 0);
+        //led count
+        ledCount = data["led_count"].is_null() ? ledCount : static_cast<int>(data["led_count"]);
         //set up the settings object
         if (!data["settings"].is_null()) {
             settings.setData(data["settings"]);
         }
         if(type == 0) pins.setData(data["pin_out"]);
         if(type == 1) pins.setData(static_cast<int>(data["pin_out"]));
+        if(!data["tv_settings"].is_null()){
+            led_pos[0][0] = data["tv_settings"]["tops"];
+            led_pos[0][1] = data["tv_settings"]["tope"];
+            led_pos[1][0] = data["tv_settings"]["bottoms"];
+            led_pos[1][1] = data["tv_settings"]["bottome"];
+            led_pos[2][0] = data["tv_settings"]["lefts"];
+            led_pos[2][1] = data["tv_settings"]["lefte"];
+            led_pos[3][0] = data["tv_settings"]["rights"];
+            led_pos[3][1] = data["tv_settings"]["righte"];
+        }
+    }
+
+    json getTVSettings() {
+        json data = {
+            {"tops", led_pos[0][0]},
+            {"tope", led_pos[0][1]},
+            {"bottoms", led_pos[1][0]},
+            {"bottome", led_pos[1][1]},
+            {"lefts", led_pos[2][0]},
+            {"lefte", led_pos[2][1]},
+            {"rights", led_pos[3][0]},
+            {"righte", led_pos[3][1]}
+        };
+        return data;
     }
 
     json getJson() override {
@@ -47,7 +84,8 @@ public:
                 {"type", type == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
                 {"settings", settings.getJson()},
                 // //depending on the type of the device the pinout will be different so change the response based on that.
-                {"pin_out", type == 1 ? static_cast<json>(pins.getAddressablePinout()) : static_cast<json>(pins.getNonAddressableJson())}
+                {"pin_out", type == 1 ? static_cast<json>(pins.getAddressablePinout()) : static_cast<json>(pins.getNonAddressableJson())},
+                {"tv_settings", getTVSettings()}
             };
         return data;
     }
@@ -65,6 +103,43 @@ public:
             std::cerr << "Error parsing JSON: " << e.what() << std::endl;
             name = "default";
             type = 0;
+        }
+    }
+
+    void updateLedTVStyle(){
+        int start = 0;
+        int end = 0;
+        int length = 0;
+        int increment = 1;
+        int startI = 0;
+        int iterations = 0;
+        float step = 1.0f;
+        if(captureDevice.isCapturing){
+            for (int i = 0; i < 4; i++) {
+                start = led_pos[i][0];
+                end = led_pos[i][1];
+                iterations = captureDevice.getIterations(i);
+
+                cv::Vec3b* row = captureDevice.getPrcsdRwFrmSide(i);
+                //set up the loop values so we go in the correct direction
+                length = end - start;
+                if(length < 0){
+                    increment = -1;
+                    startI = length;
+                } else {
+                    increment = 1;
+                    startI = 0;
+                }
+                step = length / iterations;
+                for(int j = 0; j >= 0 && j < length; j = j + increment) {
+                    //update the led color with the closest color in the image frame
+                    //updateLED(i, captureDevice.getClosestColor(x, y));
+                }
+                //update the led color with the closest color in the image frame
+                //updateLED(i, captureDevice.getClosestColor(x, y));
+            }
+        } else {
+            //tv isn't capturing. Maybe do some idle animation here
         }
     }
 };

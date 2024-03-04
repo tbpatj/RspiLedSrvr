@@ -7,6 +7,7 @@ class FrameProcessor {
         cv::Mat newImage;
         int paddingX;
         int paddingY;
+        bool process1Pxl = false;
     
     public:
         //returns true if was able to actually process the frame
@@ -27,13 +28,24 @@ class FrameProcessor {
                 getBlurredLength(frame,iterationsX, 1, 0, 1, paddingX);
                 //right edge
                 getBlurredLength(frame,iterationsY, 0, 1, 1, paddingY);
-
+                if(process1Pxl){
+                   cv::Scalar averageColor = cv::mean(newImage);
+                }
                 
                 return true;
             } else {
                 return false;
             }
             
+        }
+
+        cv::Vec3b* getProcessedSide(int side){
+            return newImage.ptr<cv::Vec3b>(side);
+        }
+
+        int getIterations(int side){
+            if(side <= 1) return iterationsX;
+            else return iterationsY;
         }
 
 
