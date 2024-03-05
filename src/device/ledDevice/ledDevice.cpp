@@ -34,7 +34,6 @@ public:
             t = static_cast<float>((now - tStart).count()) / transitionSpeed;
             // t = curTime.count() - tStart;
             if(t >= 1.0f) t = 1.0f;
-            std::cout << "tStart: " << t << std::endl;
         }
         if(settings.power){
             if(type == 1){
@@ -140,14 +139,24 @@ public:
         }
     }
 
+    //update the LED with a integer that stores r g and b values
+    void updateLED(int index, int color){
+        if(t < 1){
+            int nColor = interpolate(leds2[index], color, t);
+            leds[index] = nColor;
+            
+        } else leds[index] = color;
+        
+        //debug option to show the leds in an image
+        if(show_LEDS) updateDebugPixel(index, leds[index]);
+    }
+
     void updateLED(int index, int r, int g, int b){
         if(t < 1){
             int nColor = interpolate(leds2[index], r, g, b, t);
             leds[index] = nColor;
             
-        } else {
-            leds[index] = (r << 16) | (g << 8) | (b);
-        }
+        } else leds[index] = (r << 16) | (g << 8) | (b);
 
         //debug option to show the leds in an image
         if(show_LEDS) updateDebugPixel(index, leds[index]);
@@ -163,7 +172,13 @@ public:
                     (int) ((b2 - b1) * fraction + b1);
     }
 
-    int interpolateColors(int color1, int color2, float fraction)
+    int interpolate(int r1, int g1, int b1, int r2, int g2, int b2, float fraction){
+         return (int) ((r2 - r1) * fraction + r1) << 16 |
+                    (int) ((g2 - g1) * fraction + g1) << 8 |
+                    (int) ((b2 - b1) * fraction + b1);
+    }
+
+    int interpolate(int color1, int color2, float fraction)
     {
             //bit shift the colors back
             unsigned char   r1 = (color1 >> 16) & 0xff;
@@ -206,22 +221,42 @@ public:
                     startJ = 0;
                     offsetI = start;
                 }
-                step = iterations / length;
-                if(step < 1){
-                    // for(int j = 0; j >= 0 && j < length; j = j + increment) {
-                    //     //update the led color with the closest color in the image frame
-                    //     //updateLED(i, captureDevice.getClosestColor(x, y));
-                    // }
-                } else {
-                    //if the step is greater than 1 then that means 
-                    //make sure increment is going in correct direction
-                    for(int j = startJ; j >= 0 && j <= length; j = j + increment){
-                        cv::Vec3b pixel = row[static_cast<int>(std::floor(j * step))];
-                        updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
+                if(length != 0){
+                    step = static_cast<float>(iterations) / length;
+                    if(step < 1){
+                        //initialize variable declarations before looping
+                        float rowIndex = 0.0f;
+                        int indx1 = 0;
+                        int indx2 = 0;
+                        int perc = 0;
+                        int nColor = 0;
+                        for(int j = startJ; j >= 0 && j <= length; j = j + increment){
+                            //we'll need to interpolate between two pixels
+
+                            //get the indecies that we'll interpolate between
+                            rowIndex = j * step;
+                            indx1 = static_cast<int>(std::floor(rowIndex));
+                            indx2 = static_cast<int>(std::ceil(rowIndex));
+                            std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
+                            //get the fraction of how far we are to the next index so we can interpolate properly
+                            perc = rowIndex - indx1;
+                            if(indx2 > row->cols - 1) indx2 = indx1;
+                            cv::Vec3b pixel1 = row[static_cast<int>(std::floor(rowIndex))];
+                            cv::Vec3b pixel2 = row[static_cast<int>(std::ceil(rowIndex))];
+                            //perform the interpolation
+                            nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
+                            updateLED(j + offsetI, nColor);
+                        }
+                        std::cout << "step is: " << step << " iterations: " << iterations << " length: " << length << std::endl;
+                    } else {
+                        //if the step is greater than 1 then that means 
+                        //make sure increment is going in correct direction
+                        for(int j = startJ; j >= 0 && j <= length; j = j + increment){
+                            cv::Vec3b pixel = row[static_cast<int>(std::floor(j * step))];
+                            updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
+                        }
                     }
                 }
-                //update the led color with the closest color in the image frame
-                //updateLED(i, captureDevice.getClosestColor(x, y));
             }
         } else {
             //tv isn't capturing. Maybe do some idle animation here

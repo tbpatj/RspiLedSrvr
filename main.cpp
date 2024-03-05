@@ -9,9 +9,9 @@ using json = nlohmann::json;
 #include "./resources/httplib.h"
 
 //Debug varaibles
-const bool show_processed_image = false;
+const bool show_processed_image = true;
 const bool show_webcam_feed = false;
-const bool show_LEDS = false;
+const bool show_LEDS = true;
 const bool write_frame_proccessor_data = false;
 
 #include "./src/utils/utils.cpp"
@@ -39,13 +39,11 @@ httplib::Server svr;
 
 
 int main(){
-
-   
-
     loadDevices();
     std::thread serverThread(RunLedServer);
      //inital content loading
     while(running == 1){
+        //run the capture device
         if(captureDevice.isCapturing){
             captureDevice.updateFrame();
             captureDevice.processFrame();
@@ -53,8 +51,8 @@ int main(){
             //     std::cout << "Closing" << std::endl;
             //     break;
             // };
-            
         }
+        //run the led devices
         for (int i = 0; i < devices.size(); i++) {
             devices[i]->update();
         }
