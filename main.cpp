@@ -1,6 +1,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <chrono>
 #include <memory> // Include the <memory> header for std::make_unique
 #include <opencv2/opencv.hpp>
 #include "./resources/json.hpp"
@@ -10,7 +11,7 @@ using json = nlohmann::json;
 //Debug varaibles
 const bool show_processed_image = true;
 const bool show_webcam_feed = false;
-const bool write_frame_proccessor_data = true;
+const bool write_frame_proccessor_data = false;
 
 #include "./src/utils/utils.cpp"
 
@@ -38,11 +39,11 @@ httplib::Server svr;
 
 int main(){
 
-    //inital content loading
-    loadDevices();
+   
 
+    loadDevices();
     std::thread serverThread(RunLedServer);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+     //inital content loading
     while(running == 1){
         if(captureDevice.isCapturing){
             captureDevice.updateFrame();

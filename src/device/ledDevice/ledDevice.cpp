@@ -17,24 +17,21 @@ private:
         std::vector<int> leds2;
 
         //transition stuff
-        int t;
-        int transitionSpeed;
+        std::chrono::milliseconds tStart;
+        float t = 0.0f;
+        // std::chrono::milliseconds::rep t;
+        //miliseconds
+        long long transitionSpeed = 1000;
 
 public:
 
     void update() override {
-        // implementation for updating a LedDevice
-        if(settings.power){
-            if(type == 0) {
-                //update non-addressable leds
-            } else if(type == 1) {
-                //update addressable leds
-
-                //tv update mode
-                if(settings.mode == 1){
-                    updateLedTVStyle();
-                }
-            }
+        if(t < 1.0f){
+            std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            t = static_cast<float>((now - tStart).count()) / transitionSpeed;
+            // t = curTime.count() - tStart;
+            if(t >= 1.0f) t = 1.0f;
+            std::cout << "tStart: " << t << std::endl;
         }
     }
 
@@ -48,6 +45,11 @@ public:
         //set up the settings object
         if (!data["settings"].is_null()) {
             settings.setData(data["settings"]);
+
+            //reset timer for transitions... probably could be moved somewhere else
+            t = 0;
+            // tStart = std::chrono::high_resolution_clock::now();
+            tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         }
         if(type == 0) pins.setData(data["pin_out"]);
         if(type == 1) pins.setData(static_cast<int>(data["pin_out"]));
@@ -93,12 +95,16 @@ public:
     LedDevice(std::string newName, int newType) {
         name = newName;
         type = newType;
+        t = 0.0f;
+        tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         // settings = new LedDeviceSettings("default", 0, "default", false);
         pins = LedDevicePins(0);
     }
     LedDevice(json data) {
         try{
             setData(data);
+            t = 0.0f;
+            tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         }catch(const json::exception& e){
             std::cerr << "Error parsing JSON: " << e.what() << std::endl;
             name = "default";
@@ -106,12 +112,44 @@ public:
         }
     }
 
+    void updateLED(int index, int r, int g, int b){
+        if(t < 1){
+            
+        }
+    }
+
+    int interpolate(int color, int r2, int g2, int b2, float fraction){
+        unsigned char   r1 = (color >> 16) & 0xff;
+        unsigned char   g1 = (color >> 8) & 0xff;
+        unsigned char   b1 = color & 0xff;
+
+         return (int) ((r2 - r1) * fraction + r1) << 16 |
+                    (int) ((g2 - g1) * fraction + g1) << 8 |
+                    (int) ((b2 - b1) * fraction + b1);
+    }
+
+    int interpolateColors(int color1, int color2, float fraction)
+    {
+            //bit shift the colors back
+            unsigned char   r1 = (color1 >> 16) & 0xff;
+            unsigned char   r2 = (color2 >> 16) & 0xff;
+            unsigned char   g1 = (color1 >> 8) & 0xff;
+            unsigned char   g2 = (color2 >> 8) & 0xff;
+            unsigned char   b1 = color1 & 0xff;
+            unsigned char   b2 = color2 & 0xff;
+
+            //interpolate between the colors
+            return (int) ((r2 - r1) * fraction + r1) << 16 |
+                    (int) ((g2 - g1) * fraction + g1) << 8 |
+                    (int) ((b2 - b1) * fraction + b1);
+    }
+
     void updateLedTVStyle(){
         int start = 0;
         int end = 0;
         int length = 0;
         int increment = 1;
-        int startI = 0;
+        int startJ = 0;
         int iterations = 0;
         float step = 1.0f;
         if(captureDevice.isCapturing){
@@ -125,15 +163,24 @@ public:
                 length = end - start;
                 if(length < 0){
                     increment = -1;
-                    startI = length;
+                    startJ = length;
                 } else {
                     increment = 1;
-                    startI = 0;
+                    startJ = 0;
                 }
-                step = length / iterations;
-                for(int j = 0; j >= 0 && j < length; j = j + increment) {
-                    //update the led color with the closest color in the image frame
-                    //updateLED(i, captureDevice.getClosestColor(x, y));
+                step = iterations / length;
+
+                if(step < 1){
+                    // for(int j = 0; j >= 0 && j < length; j = j + increment) {
+                    //     //update the led color with the closest color in the image frame
+                    //     //updateLED(i, captureDevice.getClosestColor(x, y));
+                    // }
+                } else {
+                    //if the step is greater than 1 then that means 
+                    //make sure increment is going in correct direction
+                    for(int j = startJ; j >= 0 && j < length; j = j + increment){
+                        cv::Vec3b pixel = row[static_cast<int>(std::floor(j * step))];
+                    }
                 }
                 //update the led color with the closest color in the image frame
                 //updateLED(i, captureDevice.getClosestColor(x, y));
