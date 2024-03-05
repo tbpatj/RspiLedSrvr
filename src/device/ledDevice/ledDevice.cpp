@@ -21,7 +21,10 @@ private:
         float t = 0.0f;
         // std::chrono::milliseconds::rep t;
         //miliseconds
-        long long transitionSpeed = 1000;
+        long long transitionSpeed = 10000;
+
+        //testing purposes
+        cv::Mat ledImage;
 
 public:
 
@@ -33,6 +36,29 @@ public:
             if(t >= 1.0f) t = 1.0f;
             std::cout << "tStart: " << t << std::endl;
         }
+        if(settings.power){
+            if(type == 1){
+                if(settings.mode == 1){
+                    updateLedTVStyle();
+                }
+            }
+        }
+        //debug options
+        if(show_LEDS){
+            if(ledCount > 0){
+                cv::imshow(name, ledImage);
+                if( cv::waitKey (30) >= 0) {
+                    std::cout << "Closing" << std::endl;
+                    return;
+                };
+            }
+        }
+    }
+
+    void setLEDCount(int count) {
+        ledCount = count;
+        leds.resize(ledCount);
+        leds2.resize(ledCount);
     }
 
     void setData(json data) override {
@@ -41,7 +67,7 @@ public:
         //set up the type of the device, if it's null then set it to non-addressable
         type = data["type"].is_null() ? type : (data["type"] == "addressable" ? 1 : 0);
         //led count
-        ledCount = data["led_count"].is_null() ? ledCount : static_cast<int>(data["led_count"]);
+        setLEDCount(data["led_count"].is_null() ? ledCount : static_cast<int>(data["led_count"]));
         //set up the settings object
         if (!data["settings"].is_null()) {
             settings.setData(data["settings"]);
@@ -85,6 +111,7 @@ public:
                 {"name", name}, // Add a new key-value pair to the JSON object
                 {"type", type == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
                 {"settings", settings.getJson()},
+                {"led_count", ledCount},
                 // //depending on the type of the device the pinout will be different so change the response based on that.
                 {"pin_out", type == 1 ? static_cast<json>(pins.getAddressablePinout()) : static_cast<json>(pins.getNonAddressableJson())},
                 {"tv_settings", getTVSettings()}
@@ -105,6 +132,7 @@ public:
             setData(data);
             t = 0.0f;
             tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            if(show_LEDS) ledImage = cv::Mat::zeros(cv::Size(ledCount,1), CV_8UC3); // Update to use 3 color channels (CV_8UC3) instead of grayscale (0)
         }catch(const json::exception& e){
             std::cerr << "Error parsing JSON: " << e.what() << std::endl;
             name = "default";
@@ -114,8 +142,15 @@ public:
 
     void updateLED(int index, int r, int g, int b){
         if(t < 1){
+            int nColor = interpolate(leds2[index], r, g, b, t);
+            leds[index] = nColor;
             
+        } else {
+            leds[index] = (r << 16) | (g << 8) | (b);
         }
+
+        //debug option to show the leds in an image
+        if(show_LEDS) updateDebugPixel(index, leds[index]);
     }
 
     int interpolate(int color, int r2, int g2, int b2, float fraction){
@@ -151,6 +186,7 @@ public:
         int increment = 1;
         int startJ = 0;
         int iterations = 0;
+        int offsetI = 0;
         float step = 1.0f;
         if(captureDevice.isCapturing){
             for (int i = 0; i < 4; i++) {
@@ -164,12 +200,13 @@ public:
                 if(length < 0){
                     increment = -1;
                     startJ = length;
+                    offsetI = end;
                 } else {
                     increment = 1;
                     startJ = 0;
+                    offsetI = start;
                 }
                 step = iterations / length;
-
                 if(step < 1){
                     // for(int j = 0; j >= 0 && j < length; j = j + increment) {
                     //     //update the led color with the closest color in the image frame
@@ -178,8 +215,9 @@ public:
                 } else {
                     //if the step is greater than 1 then that means 
                     //make sure increment is going in correct direction
-                    for(int j = startJ; j >= 0 && j < length; j = j + increment){
+                    for(int j = startJ; j >= 0 && j <= length; j = j + increment){
                         cv::Vec3b pixel = row[static_cast<int>(std::floor(j * step))];
+                        updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
                     }
                 }
                 //update the led color with the closest color in the image frame
@@ -188,6 +226,18 @@ public:
         } else {
             //tv isn't capturing. Maybe do some idle animation here
         }
+    }
+
+
+    //------- DEBUG ------
+    void updateDebugPixel(int index, int color){
+        cv::Vec3b& pixel = ledImage.at<cv::Vec3b>(0,index);
+        int r = static_cast<int>((leds[index] >> 16) & 0xff);
+        int g =  static_cast<int>((leds[index] >> 8) & 0xff);
+        int b =  static_cast<int>(leds[index] & 0xff);
+        pixel[0] = b; // Blue channel
+        pixel[1] = g; // Green channel
+        pixel[2] = r; // Red channel
     }
 };
 
@@ -240,12 +290,6 @@ public:
 
 
     // /* --------- LED UTIL CODE --------- */
-
-    // void setLEDCount(int count) {
-    //     ledCount = count;
-    //     leds.resize(ledCount);
-    //     leds2.resize(ledCount);
-    // }
 
     // void setLED(int index, int r, int g, int b) {
     //     leds[index] = (r << 16) | (g << 8) | (b);
