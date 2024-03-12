@@ -85,7 +85,8 @@ class LedDeviceSettings {
                 {"name", name}, // Add a new key-value pair to the JSON object
                 {"type", type == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
                 {"mode", getStrFromMode()},
-                {"power", power ? "on" : "off"}
+                {"power", power ? "on" : "off"},
+                {"mapping", getMappings()}
             };
         return data;
     }
