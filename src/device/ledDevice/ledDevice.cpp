@@ -93,7 +93,7 @@ public:
     //here is where we will perform certain operations on the image of the animation to make it so the animation changes or something
     void updateAnimationAfterLooped() {
         // Call the colorShift function with the desired shift value
-        colorShift(animImage, 30); // Shift the hue by 30 degrees 
+        // colorShift(animImage, 30); // Shift the hue by 30 degrees 
     }
 
     void colorShift(cv::Mat& image, int shift) {
@@ -126,7 +126,10 @@ public:
         //set up the settings object
         if (!data["settings"].is_null()) {
             settings.setData(data["settings"]);
-
+            //if the mode isn't -1 then we want to load up the animation image
+            if(!data["settings"]["mode"].is_null() && settings.mode != -1 && settings.mode >= 0 && settings.mode < animations.size()){
+                animImage = animations[settings.mode].getAnimation();
+            }
             //reset timer for transitions... probably could be moved somewhere else
             t = 0;
             // tStart = std::chrono::high_resolution_clock::now();
@@ -182,7 +185,6 @@ public:
         tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         // settings = new LedDeviceSettings("default", 0, "default", false);
         pins = LedDevicePins(0);
-        animImage = cv::imread("./resources/animations/breathe.png");
     }
     LedDevice(json data) {
         try{
@@ -190,7 +192,6 @@ public:
             t = 0.0f;
             tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
             if(show_LEDS) ledImage = cv::Mat::zeros(cv::Size(ledCount,1), CV_8UC3); // Update to use 3 color channels (CV_8UC3) instead of grayscale (0)
-            animImage = cv::imread("./resources/animations/breathe.png");
         }catch(const json::exception& e){
             std::cerr << "Error parsing JSON: " << e.what() << std::endl;
             name = "default";
@@ -269,81 +270,83 @@ public:
     //maybe later make it so the images can be modified while in use so like it color shifts. So if you want to have a breathing animation. It's 2 rows, a colored pixel and a non colored. Then after it completes each animation it shifts the colors by using a filter
     void updateFromImageAnimation(){
         //get current frame
-        cv::Rect roi(0,animIndx,animImage.cols,1);
-        cv::Mat floorFrame = animImage(roi);
-        //get next frame
-        int ceilFrameIndx = animIndx + 1;
-        if(ceilFrameIndx >= animImage.rows) ceilFrameIndx = 0;
-        cv::Rect roi2(0,ceilFrameIndx,animImage.cols,1);
-        cv::Mat ceilFrame = animImage(roi2);
+        if(animImage.cols > 0 && animImage.rows > 0 && animIndx < animImage.rows){
+            cv::Rect roi(0,animIndx,animImage.cols,1);
+            cv::Mat floorFrame = animImage(roi);
+            //get next frame
+            int ceilFrameIndx = animIndx + 1;
+            if(ceilFrameIndx >= animImage.rows) ceilFrameIndx = 0;
+            cv::Rect roi2(0,ceilFrameIndx,animImage.cols,1);
+            cv::Mat ceilFrame = animImage(roi2);
 
-        //interpolate between the two frames so we are at the current frame
-        cv::Mat cFrame = interpolateFrames(floorFrame, ceilFrame, animT);
-        cv::Vec3b* row = cFrame.ptr<cv::Vec3b>(0);
-        cv::imshow("Animation", cFrame);
-        
+            //interpolate between the two frames so we are at the current frame
+            cv::Mat cFrame = interpolateFrames(floorFrame, ceilFrame, animT);
+            cv::Vec3b* row = cFrame.ptr<cv::Vec3b>(0);
+            cv::imshow("Animation", cFrame);
+            
 
-        int start = 0;
-        int end = 0;
-        int length = 0;
-        int increment = 1;
-        int startJ = 0;
-        int iterations = 0;
-        int offsetI = 0;
-        float step = 1.0f;
-        //proobably test if the image is loaded
-        if(1 == 1){
-            for (int i = 0; i < settings.mappings.size(); i++) {
-                start = settings.mappings[i].ledSIndx;
-                end = settings.mappings[i].ledEIndx;
-                iterations = min(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx,cFrame.cols);
+            int start = 0;
+            int end = 0;
+            int length = 0;
+            int increment = 1;
+            int startJ = 0;
+            int iterations = 0;
+            int offsetI = 0;
+            float step = 1.0f;
+            //proobably test if the image is loaded
+            if(1 == 1){
+                for (int i = 0; i < settings.mappings.size(); i++) {
+                    start = settings.mappings[i].ledSIndx;
+                    end = settings.mappings[i].ledEIndx;
+                    iterations = min(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx,cFrame.cols);
 
-                //set up the loop values so we go in the correct direction
-                length = end - start;
-                if(length < 0){
-                    increment = -1;
-                    //since length is less than 0 we need to negate it. techically an abs function
-                    startJ = -length - 1;
-                    offsetI = end;
-                } else {
-                    increment = 1;
-                    startJ = 0;
-                    offsetI = start;
-                }
-                step = static_cast<float>(iterations) / (length == 0 ? 1.0f : length);
-                if(step < 1){
-                    // //initialize variable declarations before looping
-                    float rowIndex = 0.0f;
-                    int indx1 = 0;
-                    int indx2 = 0;
-                    int perc = 0;
-                    int nColor = 0;
-                    for(int j = startJ; j >= 0 && j < length; j = j + increment){
-                        //we'll need to interpolate between two pixels
-
-                        //get the indecies that we'll interpolate between
-                        rowIndex = static_cast<float>(j) * step;
-                        indx1 = static_cast<int>(std::floor(rowIndex));
-                        indx2 = static_cast<int>(std::ceil(rowIndex));
-                    //     std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
-                        //get the fraction of how far we are to the next index so we can interpolate properly
-                        perc = rowIndex - indx1;
-                        if(indx2 > row->cols - 1) indx2 = indx1;
-                        cv::Vec3b pixel1 = row[indx1];
-                        cv::Vec3b pixel2 = row[indx2];
-                        //perform the interpolation
-                        nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
-                        updateLED(j + offsetI, nColor);
+                    //set up the loop values so we go in the correct direction
+                    length = end - start;
+                    if(length < 0){
+                        increment = -1;
+                        //since length is less than 0 we need to negate it. techically an abs function
+                        startJ = -length - 1;
+                        offsetI = end;
+                    } else {
+                        increment = 1;
+                        startJ = 0;
+                        offsetI = start;
                     }
-                    // std::cout << "step is: " << step << " iterations: " << iterations << " length: " << length << std::endl;
-                } else {
-                    //if the step is greater than 1 then that means 
-                    //make sure increment is going in correct direction
-                    for(int j = startJ; j >= 0 && j < length; j = j + increment){
-                        int rowI = static_cast<int>(std::round(j * step));
-                        cv::Vec3b pixel = row[rowI];
-                        // std::cout << j << " rowI: " << rowI << " colors: R: " << pixel[2] << " G: " << pixel[1] << " B: " << pixel[0] << std::endl;
-                        updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
+                    step = static_cast<float>(iterations) / (length == 0 ? 1.0f : length);
+                    if(step < 1){
+                        // //initialize variable declarations before looping
+                        float rowIndex = 0.0f;
+                        int indx1 = 0;
+                        int indx2 = 0;
+                        int perc = 0;
+                        int nColor = 0;
+                        for(int j = startJ; j >= 0 && j < length; j = j + increment){
+                            //we'll need to interpolate between two pixels
+
+                            //get the indecies that we'll interpolate between
+                            rowIndex = static_cast<float>(j) * step;
+                            indx1 = static_cast<int>(std::floor(rowIndex));
+                            indx2 = static_cast<int>(std::ceil(rowIndex));
+                        //     std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
+                            //get the fraction of how far we are to the next index so we can interpolate properly
+                            perc = rowIndex - indx1;
+                            if(indx2 > row->cols - 1) indx2 = indx1;
+                            cv::Vec3b pixel1 = row[indx1];
+                            cv::Vec3b pixel2 = row[indx2];
+                            //perform the interpolation
+                            nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
+                            updateLED(j + offsetI, nColor);
+                        }
+                        // std::cout << "step is: " << step << " iterations: " << iterations << " length: " << length << std::endl;
+                    } else {
+                        //if the step is greater than 1 then that means 
+                        //make sure increment is going in correct direction
+                        for(int j = startJ; j >= 0 && j < length; j = j + increment){
+                            int rowI = static_cast<int>(std::round(j * step));
+                            cv::Vec3b pixel = row[rowI];
+                            // std::cout << j << " rowI: " << rowI << " colors: R: " << pixel[2] << " G: " << pixel[1] << " B: " << pixel[0] << std::endl;
+                            updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
+                        }
                     }
                 }
             }

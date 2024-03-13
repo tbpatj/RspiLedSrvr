@@ -7,8 +7,12 @@ class Animation {
         bool animationLoaded;
 
         void loadAnimation(){
-            animation = cv::imread("path/to/" + name + extension);
+            try{
+            animation = cv::imread("./resources/animations/" + name + extension);
             animationLoaded = true;
+            } catch(cv::Exception& e){
+                std::cout << "Error loading animation " << name << " " << extension << std::endl;
+            }
         }
 
         std::string getName() {
