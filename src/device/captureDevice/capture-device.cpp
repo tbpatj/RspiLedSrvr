@@ -61,6 +61,10 @@ class CaptureDevice {
             else return -1;
         }
 
+        int getImgCols() {
+            return frameProcessor.getImage().cols;
+        }
+
         void updateFrame(){
             if(isCapturing){
                 cap >> frame;

@@ -287,6 +287,7 @@ public:
 
             int start = 0;
             int end = 0;
+            int startMapIndx = 0;
             int length = 0;
             int increment = 1;
             int startJ = 0;
@@ -299,7 +300,7 @@ public:
                     start = settings.mappings[i].ledSIndx;
                     end = settings.mappings[i].ledEIndx;
                     iterations = min(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx,cFrame.cols);
-
+                    startMapIndx = min(settings.mappings[i].mapEIndx, settings.mappings[i].mapSIndx);
                     //set up the loop values so we go in the correct direction
                     length = end - start;
                     if(length < 0){
@@ -326,11 +327,13 @@ public:
                             //get the indecies that we'll interpolate between
                             rowIndex = static_cast<float>(j) * step;
                             indx1 = static_cast<int>(std::floor(rowIndex));
-                            indx2 = static_cast<int>(std::ceil(rowIndex));
+                            indx2 = static_cast<int>(std::ceil(rowIndex)) + startMapIndx;
                         //     std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
                             //get the fraction of how far we are to the next index so we can interpolate properly
                             perc = rowIndex - indx1;
-                            if(indx2 > row->cols - 1) indx2 = indx1;
+                            indx1 += startMapIndx;
+                            if(indx1 > cFrame.cols - 1) indx1 = 0;
+                            if(indx2 > cFrame.cols - 1) indx2 = indx1;
                             cv::Vec3b pixel1 = row[indx1];
                             cv::Vec3b pixel2 = row[indx2];
                             //perform the interpolation
@@ -367,7 +370,6 @@ public:
                 start = led_pos[i][0];
                 end = led_pos[i][1];
                 iterations = captureDevice.getIterations(i);
-
                 cv::Vec3b* row = captureDevice.getPrcsdRwFrmSide(i);
                 //set up the loop values so we go in the correct direction
                 length = end - start;
@@ -399,7 +401,7 @@ public:
                             std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
                             //get the fraction of how far we are to the next index so we can interpolate properly
                             perc = rowIndex - indx1;
-                            if(indx2 > row->cols - 1) indx2 = indx1;
+                            if(indx2 > captureDevice.getImgCols() - 1) indx2 = indx1;
                             cv::Vec3b pixel1 = row[static_cast<int>(std::floor(rowIndex))];
                             cv::Vec3b pixel2 = row[static_cast<int>(std::ceil(rowIndex))];
                             //perform the interpolation
