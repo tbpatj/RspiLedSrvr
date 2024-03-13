@@ -1,5 +1,6 @@
 void InitGetDevices() {
      svr.Get("/devices", [](const httplib::Request& req, httplib::Response& res) {
+         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
          try {
             json devicesJson = json::array();
             for (int i = 0; i < devices.size(); i++) {

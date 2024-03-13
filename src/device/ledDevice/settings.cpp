@@ -54,6 +54,7 @@ class LedDeviceSettings {
     void setMappings(json data) {
         if (data.contains("mapping") && data["mapping"].is_array()) {
             json mappingData = data["mapping"];
+            mappings.clear();
             for (const auto& mapping : mappingData) {
                 if (mapping.contains("ledSIndx") && mapping.contains("ledEIndx") && mapping.contains("mapSIndx") && mapping.contains("mapEIndx")) {
                     int ledSIndx = static_cast<int>(mapping["ledSIndx"]);

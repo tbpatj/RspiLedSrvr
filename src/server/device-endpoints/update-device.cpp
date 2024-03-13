@@ -1,5 +1,6 @@
 void InitUpdateDevice() {
     svr.Post(R"(/updateDevice/(\w+))", [&](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         //get the name param from the endpoint
         std::smatch matches;
         std::regex_match(req.path, matches, std::regex(R"(/updateDevice/(\w+))"));

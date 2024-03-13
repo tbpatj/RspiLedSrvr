@@ -10,6 +10,7 @@ private:
         LedDeviceSettings settings = LedDeviceSettings("default", 0, "default", false);
         LedDevicePins pins;
         int ledCount;
+        std::string preset = "default";
 
         //TV stuff
         int led_pos[4][2] = {{0,0},{0,0},{0,0},{0,0}};
@@ -117,6 +118,8 @@ public:
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
         //set up the type of the device, if it's null then set it to non-addressable
         type = data["type"].is_null() ? type : (data["type"] == "addressable" ? 1 : 0);
+        //set up the preset
+        preset = data["preset"].is_null() ? preset : static_cast<std::string>(data["preset"]);
         //led count
         setLEDCount(data["led_count"].is_null() ? ledCount : static_cast<int>(data["led_count"]));
         //set up the settings object
@@ -163,6 +166,7 @@ public:
                 {"type", type == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
                 {"settings", settings.getJson()},
                 {"led_count", ledCount},
+                {"preset", preset},
                 // //depending on the type of the device the pinout will be different so change the response based on that.
                 {"pin_out", type == 1 ? static_cast<json>(pins.getAddressablePinout()) : static_cast<json>(pins.getNonAddressableJson())},
                 {"tv_settings", getTVSettings()}

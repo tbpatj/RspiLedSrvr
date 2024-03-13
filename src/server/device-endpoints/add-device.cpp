@@ -1,5 +1,6 @@
 void InitAddDevice() {
      svr.Post("/addDevice", [](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
          try {
             std::cout << req.body << std::endl;
             json requestJson = json::parse(req.body);
