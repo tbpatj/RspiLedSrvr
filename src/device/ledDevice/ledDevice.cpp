@@ -345,7 +345,8 @@ public:
                         //if the step is greater than 1 then that means 
                         //make sure increment is going in correct direction
                         for(int j = startJ; j >= 0 && j < length; j = j + increment){
-                            int rowI = static_cast<int>(std::round(j * step));
+                            int rowI = static_cast<int>(std::round(j * step)) + startMapIndx;
+                            if(rowI > cFrame.cols - 1) rowI = 0;
                             cv::Vec3b pixel = row[rowI];
                             // std::cout << j << " rowI: " << rowI << " colors: R: " << pixel[2] << " G: " << pixel[1] << " B: " << pixel[0] << std::endl;
                             updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
