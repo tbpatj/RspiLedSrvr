@@ -9,30 +9,26 @@ class LedDeviceSettings {
         std::vector<LedDeviceMapping> mappings;
 
     int getModeFromStr(std::string modeStr){
-        if(modeStr == "default"){
-            return 0;
-        } else if(modeStr == "tv"){
-            return 1;
-        } else if(modeStr == "color"){
-            return 2;
-        } else if(modeStr == "off"){
-            return 3;
+        if(modeStr == "tv"){
+            return -1;
         } else {
+            //see if we can find the animation index if it matches the name of another animation in our library
+            for (int i = 0; i < animations.size(); i++) {
+                if (animations[i].getName() == modeStr) {
+                    return i;
+                }
+            }
             return 0;
         }
     }
 
     std::string getStrFromMode(){
-        if(mode == 0){
-            return "default";
-        } else if(mode == 1){
+        if(mode == -1){
             return "tv";
-        } else if(mode == 2){
-            return "color";
-        } else if(mode == 3){
-            return "off";
+        } else if(mode > 0 && mode < animations.size()){
+            return animations[mode].getName();
         } else {
-            return "default";
+            return "none";
         }
     }
 

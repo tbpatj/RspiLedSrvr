@@ -38,7 +38,8 @@ public:
         updateAnimationTiming();
         if(settings.power){
             if(type == 1){
-                if(settings.mode == 1){
+                //-1 is the tv mode
+                if(settings.mode == -1){
                     updateLedTVStyle();
                 }else {
                     updateFromImageAnimation();
@@ -64,7 +65,7 @@ public:
             // t = curTime.count() - tStart;
             if(t >= 1.0f) t = 1.0f;
         }
-        if(settings.mode != 1 && settings.power) {
+        if(settings.mode != -1 && settings.power) {
             //update animation timing
             std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
             animT = static_cast<float>((now - aStart).count()) / animIndxTime;

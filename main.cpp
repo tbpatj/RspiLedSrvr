@@ -1,3 +1,5 @@
+#include <filesystem>
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -7,6 +9,7 @@
 #include "./resources/json.hpp"
 using json = nlohmann::json;
 #include "./resources/httplib.h"
+
 
 //Debug varaibles
 const bool show_processed_image = true;
@@ -18,6 +21,10 @@ const bool write_frame_proccessor_data = false;
 
 #include "./src/device/captureDevice/capture-device.cpp"
 CaptureDevice captureDevice;
+
+#include "./src/animations/animation.cpp"
+std::vector<Animation> animations;
+#include "./src/animations/init-animations.cpp"
 
 //Actual code
 #include "./src/device/device.cpp"
@@ -39,6 +46,7 @@ httplib::Server svr;
 
 
 int main(){
+    initAnimations();
     loadDevices();
     std::thread serverThread(RunLedServer);
      //inital content loading

@@ -1,10 +1,14 @@
 #include "./responses/server-responses.cpp"
 #include "./serve-client.cpp"
 #include "./device-endpoints/devices.cpp"
+#include "./animation-endpoints/init-animations.cpp"
+#include "./preset-endpoints/init-presets.cpp"
 
 void RunLedServer() {
     ServeClient();
     InitDeviceEndpoints();
+    InitPresetEndpoints();
+    InitAnimationEndpoints();
     std::cout << "Starting server" << std::endl;
 
     // Custom middleware to handle OPTIONS request and set CORS headers
