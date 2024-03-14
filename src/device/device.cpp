@@ -6,6 +6,7 @@ class Device {
         virtual void update() = 0;
         virtual json getJson() = 0;
         virtual void setData( json data) = 0;
+        virtual void setPreset(std::string presetName) = 0;
 
         virtual void setName(std::string name) {
             this->name = name;

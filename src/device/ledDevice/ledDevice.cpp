@@ -34,6 +34,7 @@ private:
 
 public:
 
+
     void update() override {
         updateAnimationTiming();
         if(settings.power){
@@ -58,6 +59,9 @@ public:
         }
     }
     
+    void setPreset(std::string presetName) override {
+        preset = presetName;
+    }
 
     void updateAnimationTiming() {
         if(t < 1.0f){
