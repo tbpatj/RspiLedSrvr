@@ -3,9 +3,10 @@
 class LedDeviceSettings {
     public:
         std::string name;
+        std::string deviceName;
         int mode;
         bool power;
-        int type;
+        int deviceType;
         std::vector<LedDeviceMapping> mappings;
 
     int getModeFromStr(std::string modeStr){
@@ -34,16 +35,17 @@ class LedDeviceSettings {
 
     LedDeviceSettings(){
         name = "default";
-        type = 0;
+        deviceType = 0;
         mode = 0;
         power = false;
     }
 
     void setData(json data) {
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
-        type = data["type"].is_null() ?  type : data["type"] == "addressable" ? 1 : 0;
+        deviceType = data["device_type"].is_null() ?  deviceType : data["device_type"] == "addressable" ? 1 : 0;
         mode = data["mode"].is_null() ?  mode : getModeFromStr(static_cast<std::string>(data["mode"]));
         power = data["power"].is_null() ? power : data["power"] == "on" ? true : false;
+        deviceName = data["device_name"].is_null() ? (deviceName) : static_cast<std::string>(data["device_name"]);
         setMappings(data);
     }
 
@@ -80,7 +82,8 @@ class LedDeviceSettings {
     json getJson() {
         json data = {
                 {"name", name}, // Add a new key-value pair to the JSON object
-                {"type", type == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
+                {"device_type", deviceType == 1 ? "addressable" : "non-addressable"}, // Add another key-value pair named "response"
+                {"device_name", deviceName},
                 {"mode", getStrFromMode()},
                 {"power", power ? "on" : "off"},
                 {"mapping", getMappings()}
@@ -88,15 +91,15 @@ class LedDeviceSettings {
         return data;
     }
 
-    LedDeviceSettings(std::string inName, int inType,int inMode, bool inPower) {
+    LedDeviceSettings(std::string inName, int inDeviceType,int inMode, bool inPower) {
         name = inName;
-        type = inType;
+        deviceType = inDeviceType;
         mode = inMode;
         power = inPower;
     }
-    LedDeviceSettings(std::string inName, int inType,std::string inMode, bool inPower) {
+    LedDeviceSettings(std::string inName, int inDeviceType,std::string inMode, bool inPower) {
         name = inName;
-        type = inType;
+        deviceType = inDeviceType;
         mode = getModeFromStr(inMode);
         power = inPower;
     }

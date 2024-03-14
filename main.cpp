@@ -26,6 +26,9 @@ CaptureDevice captureDevice;
 std::vector<Animation> animations;
 #include "./src/animations/init-animations.cpp"
 
+#include "./src/presets/preset.cpp"
+std::vector<Preset> presets;
+
 //Actual code
 #include "./src/device/device.cpp"
 #include "./src/device/ledDevice/ledDevice.cpp"
@@ -47,7 +50,7 @@ httplib::Server svr;
 
 int main(){
     initAnimations();
-    loadDevices();
+    loadDeviceAndPresets();
     std::thread serverThread(RunLedServer);
      //inital content loading
     while(running == 1){
@@ -66,6 +69,7 @@ int main(){
         }
     }
     saveDevices();
+    savePresets();
     serverThread.join();
     return 0;
 }

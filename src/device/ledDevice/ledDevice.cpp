@@ -20,7 +20,7 @@ private:
         //transition variables used for when a preset changes
         std::chrono::milliseconds tStart;
         float t = 0.0f;
-        long long transitionSpeed = 10000;
+        long long transitionSpeed = 1000;
 
         //animation variables
         int animIndx = 0;
@@ -57,6 +57,7 @@ public:
             }
         }
     }
+    
 
     void updateAnimationTiming() {
         if(t < 1.0f){
@@ -129,11 +130,25 @@ public:
             //if the mode isn't -1 then we want to load up the animation image
             if(!data["settings"]["mode"].is_null() && settings.mode != -1 && settings.mode >= 0 && settings.mode < animations.size()){
                 animImage = animations[settings.mode].getAnimation();
+                //if the new animation that is loaded up is smaller than the last then we will need to move the current frame potentially.
+                if(animIndx >= animImage.rows) {
+                    animT = 0;
+                    std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+                    // aStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+                    aStart = now;
+                    animIndx = 0;
+                }
             }
             //reset timer for transitions... probably could be moved somewhere else
             t = 0;
             // tStart = std::chrono::high_resolution_clock::now();
             tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            //set the old leds for a transition
+            leds2.clear();
+            for(int i = 0; i < leds.size(); i ++){
+                leds2.push_back(leds[i]);
+            }
+
         }
         if(type == 0) pins.setData(data["pin_out"]);
         if(type == 1) pins.setData(static_cast<int>(data["pin_out"]));
