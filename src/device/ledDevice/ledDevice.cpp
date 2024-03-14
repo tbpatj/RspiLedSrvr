@@ -95,6 +95,31 @@ public:
         }
     }
 
+    void resetTransitionTiming() {
+         //reset timer for transitions... probably could be moved somewhere else
+        t = 0;
+        // tStart = std::chrono::high_resolution_clock::now();
+        tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        //set the old leds for a transition
+        leds2.clear();
+        for(int i = 0; i < leds.size(); i ++){
+            leds2.push_back(leds[i]);
+        }
+    }
+
+    void resetAnimationTiming() {
+        animImage = animations[settings.mode].getAnimation();
+        //if the new animation that is loaded up is smaller than the last then we will need to move the current frame potentially.
+        if(animIndx >= animImage.rows) {
+            animT = 0;
+            std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            // aStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            aStart = now;
+            animIndx = 0;
+        }
+    }
+
+
     //here is where we will perform certain operations on the image of the animation to make it so the animation changes or something
     void updateAnimationAfterLooped() {
         // Call the colorShift function with the desired shift value
@@ -119,39 +144,48 @@ public:
         leds2.resize(ledCount);
     }
 
+    void updateSettingsToPreset(std::string newPreset) {
+        for(int i = 0; i < presets.size(); i++){
+            if(presets[i].getName() == newPreset && presets[i].getNumType() == type && name == presets[i].getDeviceName()){
+                int oldMode = settings.mode;
+                preset = newPreset;
+                settings.setData(presets[i].getJson());
+                resetTransitionTiming();
+                if(settings.mode >= 0 && settings.mode < animations.size() && oldMode != settings.mode){
+                    resetAnimationTiming();
+                }
+                break;
+            }
+        }
+    }
+
     void setData(json data) override {
+        bool updateSettings = true;
         //if there is a name attribute in the json then update the name attribute, if not then keep it as the name it was prior unless empty then set it to default
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
         //set up the type of the device, if it's null then set it to non-addressable
         type = data["type"].is_null() ? type : (data["type"] == "addressable" ? 1 : 0);
         //set up the preset
-        preset = data["preset"].is_null() ? preset : static_cast<std::string>(data["preset"]);
+        if(!data["preset"].is_null()){
+            std::string newPreset = static_cast<std::string>(data["preset"]);
+            if(newPreset != preset && newPreset != "custom") {
+                updateSettings = false;
+                updateSettingsToPreset(newPreset);
+            } else if(newPreset == "custom") {
+                preset = newPreset;
+            }
+        }
         //led count
         setLEDCount(data["led_count"].is_null() ? ledCount : static_cast<int>(data["led_count"]));
         //set up the settings object
-        if (!data["settings"].is_null()) {
+        if (!data["settings"].is_null() && updateSettings) {
+            int oldMode = settings.mode;
             settings.setData(data["settings"]);
-            //if the mode isn't -1 then we want to load up the animation image
-            if(!data["settings"]["mode"].is_null() && settings.mode != -1 && settings.mode >= 0 && settings.mode < animations.size()){
-                animImage = animations[settings.mode].getAnimation();
-                //if the new animation that is loaded up is smaller than the last then we will need to move the current frame potentially.
-                if(animIndx >= animImage.rows) {
-                    animT = 0;
-                    std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-                    // aStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-                    aStart = now;
-                    animIndx = 0;
-                }
+            //if the mode isn't -1 then we want to load up the animation image if it was changed
+            if(!data["settings"]["mode"].is_null() && settings.mode >= 0 && settings.mode < animations.size() && oldMode != settings.mode){
+                resetAnimationTiming();
             }
-            //reset timer for transitions... probably could be moved somewhere else
-            t = 0;
-            // tStart = std::chrono::high_resolution_clock::now();
-            tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-            //set the old leds for a transition
-            leds2.clear();
-            for(int i = 0; i < leds.size(); i ++){
-                leds2.push_back(leds[i]);
-            }
+            resetTransitionTiming();
 
         }
         if(type == 0) pins.setData(data["pin_out"]);
@@ -208,6 +242,7 @@ public:
     LedDevice(json data) {
         try{
             setData(data);
+            std::cout << "Device: " << name << " type: " << type << std::endl;
             t = 0.0f;
             tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
             if(show_LEDS) ledImage = cv::Mat::zeros(cv::Size(ledCount,1), CV_8UC3); // Update to use 3 color channels (CV_8UC3) instead of grayscale (0)

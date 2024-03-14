@@ -4,6 +4,7 @@ FileManage devicesManager = FileManage("devices.json");
 FileManage presetsManager = FileManage("presets.json");
 
 void loadDevices() {
+    std::cout << "-------- Loading Devices ---------" << std::endl;
     std::string content = devicesManager.read();
     if(content != ""){
         json devicesJson = json::parse(content);
@@ -15,6 +16,7 @@ void loadDevices() {
             }
         }
     }
+    std::cout << "----------------------------------\n" << std::endl;
 }
 
 
@@ -28,17 +30,16 @@ void saveDevices() {
 
 
 void loadPresets() {
+    std::cout << "-------- Loading Presets ---------" << std::endl;
     std::string content = presetsManager.read();
     if(content != ""){
         json presetsJson = json::parse(content);
         for (json::iterator it = presetsJson.begin(); it != presetsJson.end(); ++it) {
-            std::string name = it.value()["name"];
-            std::string deviceName = it.value()["device_name"];
-            std::string deviceType = it.value()["device_type"];
             json presetJson = it.value();
-            presets.push_back(Preset(name, deviceName, deviceType, presetJson));
+            presets.push_back(Preset(presetJson));
         }
     }
+    std::cout << "----------------------------------\n" << std::endl;
 }
 
 void savePresets() {

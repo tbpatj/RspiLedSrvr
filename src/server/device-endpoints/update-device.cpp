@@ -31,7 +31,6 @@ void InitUpdateDevice() {
         }
         //update the found device or create the new device
          try {
-            std::cout << req.body << std::endl;
             json requestJson = json::parse(req.body);
             try{
                 devices[index]->setData(requestJson);

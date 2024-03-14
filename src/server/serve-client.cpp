@@ -14,7 +14,6 @@ void ServeClient() {
             res.status = 404;
             res.set_content("Not Found", "text/plain");
         }
-        std::cout << "hit" << std::endl;
     });
 
     svr.set_mount_point("/static", "./build/static");

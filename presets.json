@@ -1,1 +1,1 @@
-[{"device_name":"Test","device_type":"addressable","mapping":[{"ledEIndx":1,"ledSIndx":0,"mapEIndx":0,"mapSIndx":0}],"mode":"breathe","name":"default","power":"on"}]
+[{"device_name":"Test","device_type":"addressable","mapping":[{"ledEIndx":20,"ledSIndx":0,"mapEIndx":1,"mapSIndx":0}],"mode":"breathe","name":"default","power":"on"},{"device_name":"Test","device_type":"addressable","mapping":[{"ledEIndx":20,"ledSIndx":0,"mapEIndx":10,"mapSIndx":0}],"mode":"pixels","name":"pixels","power":"on"}]
