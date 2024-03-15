@@ -7,7 +7,8 @@ private:
         //0 for non-addressable LED
         //1 for addressable LED
         int type;
-        LedDeviceSettings settings = LedDeviceSettings("default", 0, "default", false);
+        //we initialize the mode parameter with -1000 so we know it hasn't been intitalized, since 0 and -1 are used
+        LedDeviceSettings settings = LedDeviceSettings("default", 0, -1000, false);
         LedDevicePins pins;
         int ledCount;
         std::string preset = "default";
@@ -179,6 +180,7 @@ public:
         setLEDCount(data["led_count"].is_null() ? ledCount : static_cast<int>(data["led_count"]));
         //set up the settings object
         if (!data["settings"].is_null() && updateSettings) {
+            //get the mode before a potential update so we can check if we actually need to change the animation image and timings
             int oldMode = settings.mode;
             settings.setData(data["settings"]);
             //if the mode isn't -1 then we want to load up the animation image if it was changed
@@ -353,14 +355,15 @@ public:
                 for (int i = 0; i < settings.mappings.size(); i++) {
                     start = settings.mappings[i].ledSIndx;
                     end = settings.mappings[i].ledEIndx;
-                    iterations = min(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx,cFrame.cols);
+                    iterations = min(std::abs(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx),cFrame.cols);
                     startMapIndx = min(settings.mappings[i].mapEIndx, settings.mappings[i].mapSIndx);
                     //set up the loop values so we go in the correct direction
-                    length = end - start;
+                    length = min(end, ledCount) - min(start,ledCount);
                     if(length < 0){
                         increment = -1;
                         //since length is less than 0 we need to negate it. techically an abs function
-                        startJ = -length - 1;
+                        length = std::abs(length);
+                        startJ = length - 1;
                         offsetI = end;
                     } else {
                         increment = 1;
@@ -375,11 +378,12 @@ public:
                         int indx2 = 0;
                         float perc = 0.0f;
                         int nColor = 0;
-                        for(int j = startJ; j >= 0 && j < length; j = j + increment){
+                        int stepI = 0;
+                        for(int j = startJ; j >= 0 && j < length && j + offsetI < ledCount; j = j + increment){
                             //we'll need to interpolate between two pixels
 
                             //get the indecies that we'll interpolate between
-                            rowIndex = static_cast<float>(j) * step;
+                            rowIndex = static_cast<float>(stepI) * step;
                             indx1 = static_cast<int>(std::floor(rowIndex));
                             indx2 = static_cast<int>(std::ceil(rowIndex)) + startMapIndx;
                         //     std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
@@ -393,17 +397,21 @@ public:
                             //perform the interpolation
                             nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
                             updateLED(j + offsetI, nColor);
+                            //update the step counter
+                            stepI ++;
                         }
                         // std::cout << "step is: " << step << " iterations: " << iterations << " length: " << length << std::endl;
                     } else {
-                        //if the step is greater than 1 then that means 
+                        int stepI = 0;
+                        //if the step is greater than 1 then that means no interpolation is required
                         //make sure increment is going in correct direction
                         for(int j = startJ; j >= 0 && j < length; j = j + increment){
-                            int rowI = static_cast<int>(std::round(j * step)) + startMapIndx;
+                            int rowI = static_cast<int>(std::round(stepI * step)) + startMapIndx;
                             if(rowI > cFrame.cols - 1) rowI = 0;
                             cv::Vec3b pixel = row[rowI];
                             // std::cout << j << " rowI: " << rowI << " colors: R: " << pixel[2] << " G: " << pixel[1] << " B: " << pixel[0] << std::endl;
                             updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
+                            stepI ++;
                         }
                     }
                 }

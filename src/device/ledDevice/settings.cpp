@@ -4,7 +4,8 @@ class LedDeviceSettings {
     public:
         std::string name;
         std::string deviceName;
-        int mode;
+        //currently means it's unassigned, since 0 could be a mode that exists
+        int mode = -1000;
         bool power;
         int deviceType;
         std::vector<LedDeviceMapping> mappings;
@@ -26,7 +27,7 @@ class LedDeviceSettings {
     std::string getStrFromMode(){
         if(mode == -1){
             return "tv";
-        } else if(mode > 0 && mode < animations.size()){
+        } else if(mode >= 0 && mode < animations.size()){
             return animations[mode].getName();
         } else {
             return "none";
@@ -36,7 +37,7 @@ class LedDeviceSettings {
     LedDeviceSettings(){
         name = "default";
         deviceType = 0;
-        mode = 0;
+        mode = -1000;
         power = false;
     }
 
