@@ -33,8 +33,8 @@ class CaptureDevice {
             try{
                 numEmptyFrames = 0;
                 // mac open webcam code \/
-                cap.open(0,cv::CAP_AVFOUNDATION);
-                // cap.open(-1);
+                // cap.open(0,cv::CAP_AVFOUNDATION);
+                cap.open(-1);
                 //check to make sure that the capture was actually opened
                 if(!cap.isOpened()){
                     isCapturing = false;
