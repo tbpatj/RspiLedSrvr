@@ -31,3 +31,8 @@ compiling will need \`pkg-config --cflags --libs opencv4\`
 
 compile script
 g++ main.cpp -o app -I/usr/local/include/opencv4 -std=c++14 \`pkg-config --libs opencv4\`
+
+## Branches
+
+main - main branch where most updates are created but does not have raspberry pi output functionality
+functioning-leds - the branch where the leds are actually implemented to work with raspberry pi
