@@ -15,19 +15,15 @@ class FrameProcessor {
             if(write_frame_proccessor_data) std::cout << "Processing Frame\n frame width: " << frame.size().width << " frame height: " << frame.size().height << "\niterationsX: " << iterationsX << " iterationsY: " << iterationsY << "\npaddingX: " << paddingX << " paddingY: " << paddingY << "\nstepX: " << stepX << " stepY: " << stepY << std::endl;
             if(stepX != 0 && stepY != 0){
                 //process each side of the frame
-                //new image is returned:
-                //1st row - top edge
-                //2nd row - bottom edge
-                //3rd row - left edge
-                //4th row - right edge
+                //new image is returned on one row in success after each other
                 //top edge
-                getBlurredLength(frame,iterationsX, 1, 0, 0, paddingX);
-                //left edge
-                getBlurredLength(frame,iterationsY, 0, 1, 0, paddingY);
-                //bottom edge
-                getBlurredLength(frame,iterationsX, 1, 0, 1, paddingX);
-                //right edge
-                getBlurredLength(frame,iterationsY, 0, 1, 1, paddingY);
+                getBlurredLength(frame,iterationsX, 1, 0, 0, paddingX, 0);
+                // bottom edge
+                getBlurredLength(frame,iterationsX, 1, 0, 1, paddingX, iterationsX);
+                // left edge
+                getBlurredLength(frame,iterationsY, 0, 1, 0, paddingY, iterationsX * 2);
+                // right edge
+                getBlurredLength(frame,iterationsY, 0, 1, 1, paddingY, iterationsX * 2 + iterationsY);
                 if(process1Pxl){
                    cv::Scalar averageColor = cv::mean(newImage);
                 }
@@ -39,17 +35,8 @@ class FrameProcessor {
             
         }
 
-        cv::Vec3b* getProcessedSide(int side){
-            return newImage.ptr<cv::Vec3b>(side);
-        }
 
-        int getIterations(int side){
-            if(side <= 1) return iterationsX;
-            else return iterationsY;
-        }
-
-
-        void getBlurredLength(cv::Mat frame,int iterations,int xStep,int yStep,bool addBase,int padding){
+        void getBlurredLength(cv::Mat frame,int iterations,int xStep,int yStep,bool addBase,int padding, int offset){
             int x = addBase && xStep == 0 ? frame.size().width - padding : padding;
             int y = addBase && yStep == 0 ? frame.size().height - padding : padding;
             
@@ -60,7 +47,7 @@ class FrameProcessor {
                 cv::Scalar averageColor = cv::mean(roiImage); // Calculate the average color of the ROI section
 
                 // Create a single-pixel image with the average color
-                cv::Vec3b& pixel = newImage.at<cv::Vec3b>(yStep * 2 + (addBase ? 0 : 1),i);
+                cv::Vec3b& pixel = newImage.at<cv::Vec3b>(0,i + offset);
                 pixel[0] = averageColor[0]; // Blue channel
                 pixel[1] = averageColor[1]; // Green channel
                 pixel[2] = averageColor[2]; // Red channel
@@ -82,7 +69,7 @@ class FrameProcessor {
             paddingX = 80;
             paddingY = 80;
             initStep(frame);
-            newImage = cv::Mat::zeros(cv::Size(max(iterationsX, iterationsY),4), frame.type());
+            newImage = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1), frame.type());
           
         }
         FrameProcessor(){

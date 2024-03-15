@@ -42,7 +42,10 @@ public:
             if(type == 1){
                 //-1 is the tv mode
                 if(settings.mode == -1){
-                    updateLedTVStyle();
+                    animImage = captureDevice.getImage();
+                    animIndx = 0;
+                    updateFromImageAnimation();
+                    // updateLedTVStyle();
                 }else {
                     updateFromImageAnimation();
                 }
@@ -328,19 +331,23 @@ public:
         //get current frame
         if(animImage.cols > 0 && animImage.rows > 0 && animIndx < animImage.rows){
             cv::Rect roi(0,animIndx,animImage.cols,1);
-            cv::Mat floorFrame = animImage(roi);
+            cv::Mat cFrame = animImage(roi);
             //get next frame
             int ceilFrameIndx = animIndx + 1;
             if(ceilFrameIndx >= animImage.rows) ceilFrameIndx = 0;
-            cv::Rect roi2(0,ceilFrameIndx,animImage.cols,1);
-            cv::Mat ceilFrame = animImage(roi2);
+            //if the next frame is different than the current frame then interpolate between the two frames
+            if(ceilFrameIndx != animIndx){
+                cv::Rect roi2(0,ceilFrameIndx,animImage.cols,1);
+                cv::Mat ceilFrame = animImage(roi2);
 
-            //interpolate between the two frames so we are at the current frame
-            cv::Mat cFrame = interpolateFrames(floorFrame, ceilFrame, animT);
+                //interpolate between the two frames so we are at the current frame
+                cFrame = interpolateFrames(cFrame, ceilFrame, animT);
+            }
+            //get a pointer to the row of the current frame
             cv::Vec3b* row = cFrame.ptr<cv::Vec3b>(0);
             cv::imshow("Animation", cFrame);
             
-
+            //set up the start of the mapping loops
             int start = 0;
             int end = 0;
             int startMapIndx = 0;
@@ -419,73 +426,73 @@ public:
         }
     }
 
-    void updateLedTVStyle(){
-        int start = 0;
-        int end = 0;
-        int length = 0;
-        int increment = 1;
-        int startJ = 0;
-        int iterations = 0;
-        int offsetI = 0;
-        float step = 1.0f;
-        if(captureDevice.isCapturing){
-            for (int i = 0; i < 4; i++) {
-                start = led_pos[i][0];
-                end = led_pos[i][1];
-                iterations = captureDevice.getIterations(i);
-                cv::Vec3b* row = captureDevice.getPrcsdRwFrmSide(i);
-                //set up the loop values so we go in the correct direction
-                length = end - start;
-                if(length < 0){
-                    increment = -1;
-                    startJ = length;
-                    offsetI = end;
-                } else {
-                    increment = 1;
-                    startJ = 0;
-                    offsetI = start;
-                }
-                if(length != 0){
-                    step = static_cast<float>(iterations) / length;
-                    if(step < 1){
-                        //initialize variable declarations before looping
-                        float rowIndex = 0.0f;
-                        int indx1 = 0;
-                        int indx2 = 0;
-                        float perc = 0;
-                        int nColor = 0;
-                        for(int j = startJ; j >= 0 && j <= length; j = j + increment){
-                            //we'll need to interpolate between two pixels
+    // void updateLedTVStyle(){
+    //     int start = 0;
+    //     int end = 0;
+    //     int length = 0;
+    //     int increment = 1;
+    //     int startJ = 0;
+    //     int iterations = 0;
+    //     int offsetI = 0;
+    //     float step = 1.0f;
+    //     if(captureDevice.isCapturing){
+    //         for (int i = 0; i < 4; i++) {
+    //             start = led_pos[i][0];
+    //             end = led_pos[i][1];
+    //             iterations = captureDevice.getIterations(i);
+    //             cv::Vec3b* row = captureDevice.getPrcsdRwFrmSide(i);
+    //             //set up the loop values so we go in the correct direction
+    //             length = end - start;
+    //             if(length < 0){
+    //                 increment = -1;
+    //                 startJ = length;
+    //                 offsetI = end;
+    //             } else {
+    //                 increment = 1;
+    //                 startJ = 0;
+    //                 offsetI = start;
+    //             }
+    //             if(length != 0){
+    //                 step = static_cast<float>(iterations) / length;
+    //                 if(step < 1){
+    //                     //initialize variable declarations before looping
+    //                     float rowIndex = 0.0f;
+    //                     int indx1 = 0;
+    //                     int indx2 = 0;
+    //                     float perc = 0;
+    //                     int nColor = 0;
+    //                     for(int j = startJ; j >= 0 && j <= length; j = j + increment){
+    //                         //we'll need to interpolate between two pixels
 
-                            //get the indecies that we'll interpolate between
-                            rowIndex = j * step;
-                            indx1 = static_cast<int>(std::floor(rowIndex));
-                            indx2 = static_cast<int>(std::ceil(rowIndex));
-                            std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
-                            //get the fraction of how far we are to the next index so we can interpolate properly
-                            perc = rowIndex - static_cast<float>(indx1);
-                            if(indx2 > captureDevice.getImgCols() - 1) indx2 = indx1;
-                            cv::Vec3b pixel1 = row[static_cast<int>(std::floor(rowIndex))];
-                            cv::Vec3b pixel2 = row[static_cast<int>(std::ceil(rowIndex))];
-                            //perform the interpolation
-                            nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
-                            updateLED(j + offsetI, nColor);
-                        }
-                        std::cout << "step is: " << step << " iterations: " << iterations << " length: " << length << std::endl;
-                    } else {
-                        //if the step is greater than 1 then that means 
-                        //make sure increment is going in correct direction
-                        for(int j = startJ; j >= 0 && j <= length; j = j + increment){
-                            cv::Vec3b pixel = row[static_cast<int>(std::floor(j * step))];
-                            updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
-                        }
-                    }
-                }
-            }
-        } else {
-            //tv isn't capturing. Maybe do some idle animation here
-        }
-    }
+    //                         //get the indecies that we'll interpolate between
+    //                         rowIndex = j * step;
+    //                         indx1 = static_cast<int>(std::floor(rowIndex));
+    //                         indx2 = static_cast<int>(std::ceil(rowIndex));
+    //                         std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
+    //                         //get the fraction of how far we are to the next index so we can interpolate properly
+    //                         perc = rowIndex - static_cast<float>(indx1);
+    //                         if(indx2 > captureDevice.getImgCols() - 1) indx2 = indx1;
+    //                         cv::Vec3b pixel1 = row[static_cast<int>(std::floor(rowIndex))];
+    //                         cv::Vec3b pixel2 = row[static_cast<int>(std::ceil(rowIndex))];
+    //                         //perform the interpolation
+    //                         nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
+    //                         updateLED(j + offsetI, nColor);
+    //                     }
+    //                     std::cout << "step is: " << step << " iterations: " << iterations << " length: " << length << std::endl;
+    //                 } else {
+    //                     //if the step is greater than 1 then that means 
+    //                     //make sure increment is going in correct direction
+    //                     for(int j = startJ; j >= 0 && j <= length; j = j + increment){
+    //                         cv::Vec3b pixel = row[static_cast<int>(std::floor(j * step))];
+    //                         updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     } else {
+    //         //tv isn't capturing. Maybe do some idle animation here
+    //     }
+    // }
 
 
     //------- DEBUG ------
@@ -499,117 +506,3 @@ public:
         pixel[2] = r; // Red channel
     }
 };
-
-// class LedDevice : public Device {
-    // private:
-    //     std::string name;
-    //     int type;
-    
-    // public:
-    //     void setName(std::string iName) {
-    //         name = iName;
-    //     }
-    //     std::string getName() {
-    //         return name;
-    //     }
-
-    //     void setType(int iType) {
-    //         type = iType;
-    //     }
-    //     int getType() {
-    //         return type;
-    //     }
-
-    // Device(std::string iName, int iType) {
-    //     name = iName;
-    //     type = iType;
-    // }
-
-
-
-    //Class I was creating earlier
-    // private:
-    //     std::string name;
-    //     //types are
-    //     //0 for non-addressable LED
-    //     //1 for addressable LED
-    //     int type;
-    //     DeviceSettings settings;
-    //     DevicePins pins;
-    //     int ledCount;
-
-    //     //TV stuff
-    //     int led_pos[4][2] = {{0,0},{0,0},{0,0},{0,0}};
-    //     std::vector<int> leds;
-    //     std::vector<int> leds2;
-
-    //     //transition stuff
-    //     int t;
-    //     int transitionSpeed;
-
-
-    // /* --------- LED UTIL CODE --------- */
-
-    // void setLED(int index, int r, int g, int b) {
-    //     leds[index] = (r << 16) | (g << 8) | (b);
-    // }
-
-    // /**
-    // * interpolate 2 RGB colors
-    // * @param color1    integer containing color as 0x00RRGGBB
-    // * @param color2    integer containing color as 0x00RRGGBB
-    // * @param fraction  how much interpolation (0..1)
-    // * - 0: full color 1
-    // * - 1: full color 2
-    // * @return the new color after interpolation
-    // */
-    // int interpolate(int color1, int color2, float fraction)
-    // {
-    //         //bit shift the colors back
-    //         unsigned char   r1 = (color1 >> 16) & 0xff;
-    //         unsigned char   r2 = (color2 >> 16) & 0xff;
-    //         unsigned char   g1 = (color1 >> 8) & 0xff;
-    //         unsigned char   g2 = (color2 >> 8) & 0xff;
-    //         unsigned char   b1 = color1 & 0xff;
-    //         unsigned char   b2 = color2 & 0xff;
-
-    //         //interpolate between the colors
-    //         return (int) ((r2 - r1) * fraction + r1) << 16 |
-    //                 (int) ((g2 - g1) * fraction + g1) << 8 |
-    //                 (int) ((b2 - b1) * fraction + b1);
-    // }
-
-    // void updateLED(int index) {
-    //     if(type == 0) {
-    //         //update the led color in the device with color
-    //     } else {
-    //         //update the led color with the closest color in the image frame
-    //     }
-    // }
-
-    // /** --------- LED LOOP --------- */
-    // void renderLEDS() {
-    //     for (int i = 0; i < ledCount; i++) {
-    //         //if we're not transitioning then we don't need to perform interpolation
-    //         if(transitionSpeed != 0 && t < transitionSpeed){
-    //             int color = interpolate(leds2[i], leds[i], t / transitionSpeed);
-    //             //update the led color in the device with color
-
-    //         } else {
-    //             //just update the led color with the led vector
-    //         }
-    //     }
-    // }
-
-    // Device() {
-    //     name = "default";
-    //     type = 0;
-    //     settings = LedDeviceSettings("default", 0, "default", false);
-    //     pins = LedDevicePins(0, 0, 0);
-    //     ledCount = 0;
-
-    //     //transition stuff declaration
-    //     t=0;
-    //     transitionSpeed = 0;
-    // }
-// };
