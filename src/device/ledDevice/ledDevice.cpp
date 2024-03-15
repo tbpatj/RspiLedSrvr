@@ -373,7 +373,7 @@ public:
                         float rowIndex = 0.0f;
                         int indx1 = 0;
                         int indx2 = 0;
-                        int perc = 0;
+                        float perc = 0.0f;
                         int nColor = 0;
                         for(int j = startJ; j >= 0 && j < length; j = j + increment){
                             //we'll need to interpolate between two pixels
@@ -384,7 +384,7 @@ public:
                             indx2 = static_cast<int>(std::ceil(rowIndex)) + startMapIndx;
                         //     std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
                             //get the fraction of how far we are to the next index so we can interpolate properly
-                            perc = rowIndex - indx1;
+                            perc = rowIndex - static_cast<float>(indx1);
                             indx1 += startMapIndx;
                             if(indx1 > cFrame.cols - 1) indx1 = 0;
                             if(indx2 > cFrame.cols - 1) indx2 = indx1;
@@ -444,7 +444,7 @@ public:
                         float rowIndex = 0.0f;
                         int indx1 = 0;
                         int indx2 = 0;
-                        int perc = 0;
+                        float perc = 0;
                         int nColor = 0;
                         for(int j = startJ; j >= 0 && j <= length; j = j + increment){
                             //we'll need to interpolate between two pixels
@@ -455,7 +455,7 @@ public:
                             indx2 = static_cast<int>(std::ceil(rowIndex));
                             std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
                             //get the fraction of how far we are to the next index so we can interpolate properly
-                            perc = rowIndex - indx1;
+                            perc = rowIndex - static_cast<float>(indx1);
                             if(indx2 > captureDevice.getImgCols() - 1) indx2 = indx1;
                             cv::Vec3b pixel1 = row[static_cast<int>(std::floor(rowIndex))];
                             cv::Vec3b pixel2 = row[static_cast<int>(std::ceil(rowIndex))];
