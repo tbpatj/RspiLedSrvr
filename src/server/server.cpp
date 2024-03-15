@@ -3,12 +3,16 @@
 #include "./device-endpoints/devices.cpp"
 #include "./animation-endpoints/init-animations.cpp"
 #include "./preset-endpoints/init-presets.cpp"
+#include "./capture-device-endpoints/init.cpp"
+#include "./util-endpoints/init-utils.cpp"
 
 void RunLedServer() {
     ServeClient();
     InitDeviceEndpoints();
     InitPresetEndpoints();
     InitAnimationEndpoints();
+    InitCaptureDeviceEndpoints();
+    InitUtilsEndpoints();
     std::cout << "Starting server" << std::endl;
 
     // Custom middleware to handle OPTIONS request and set CORS headers

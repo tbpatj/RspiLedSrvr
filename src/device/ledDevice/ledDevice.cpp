@@ -14,7 +14,6 @@ private:
         std::string preset = "default";
 
         //TV stuff
-        int led_pos[4][2] = {{0,0},{0,0},{0,0},{0,0}};
         std::vector<int> leds;
         std::vector<int> leds2;
 
@@ -195,30 +194,6 @@ public:
         }
         if(type == 0) pins.setData(data["pin_out"]);
         if(type == 1) pins.setData(static_cast<int>(data["pin_out"]));
-        if(!data["tv_settings"].is_null()){
-            led_pos[0][0] = data["tv_settings"]["tops"];
-            led_pos[0][1] = data["tv_settings"]["tope"];
-            led_pos[1][0] = data["tv_settings"]["bottoms"];
-            led_pos[1][1] = data["tv_settings"]["bottome"];
-            led_pos[2][0] = data["tv_settings"]["lefts"];
-            led_pos[2][1] = data["tv_settings"]["lefte"];
-            led_pos[3][0] = data["tv_settings"]["rights"];
-            led_pos[3][1] = data["tv_settings"]["righte"];
-        }
-    }
-
-    json getTVSettings() {
-        json data = {
-            {"tops", led_pos[0][0]},
-            {"tope", led_pos[0][1]},
-            {"bottoms", led_pos[1][0]},
-            {"bottome", led_pos[1][1]},
-            {"lefts", led_pos[2][0]},
-            {"lefte", led_pos[2][1]},
-            {"rights", led_pos[3][0]},
-            {"righte", led_pos[3][1]}
-        };
-        return data;
     }
 
     json getJson() override {
@@ -231,7 +206,6 @@ public:
                 {"preset", preset},
                 // //depending on the type of the device the pinout will be different so change the response based on that.
                 {"pin_out", type == 1 ? static_cast<json>(pins.getAddressablePinout()) : static_cast<json>(pins.getNonAddressableJson())},
-                {"tv_settings", getTVSettings()}
             };
         return data;
     }
@@ -425,75 +399,6 @@ public:
             }
         }
     }
-
-    // void updateLedTVStyle(){
-    //     int start = 0;
-    //     int end = 0;
-    //     int length = 0;
-    //     int increment = 1;
-    //     int startJ = 0;
-    //     int iterations = 0;
-    //     int offsetI = 0;
-    //     float step = 1.0f;
-    //     if(captureDevice.isCapturing){
-    //         for (int i = 0; i < 4; i++) {
-    //             start = led_pos[i][0];
-    //             end = led_pos[i][1];
-    //             iterations = captureDevice.getIterations(i);
-    //             cv::Vec3b* row = captureDevice.getPrcsdRwFrmSide(i);
-    //             //set up the loop values so we go in the correct direction
-    //             length = end - start;
-    //             if(length < 0){
-    //                 increment = -1;
-    //                 startJ = length;
-    //                 offsetI = end;
-    //             } else {
-    //                 increment = 1;
-    //                 startJ = 0;
-    //                 offsetI = start;
-    //             }
-    //             if(length != 0){
-    //                 step = static_cast<float>(iterations) / length;
-    //                 if(step < 1){
-    //                     //initialize variable declarations before looping
-    //                     float rowIndex = 0.0f;
-    //                     int indx1 = 0;
-    //                     int indx2 = 0;
-    //                     float perc = 0;
-    //                     int nColor = 0;
-    //                     for(int j = startJ; j >= 0 && j <= length; j = j + increment){
-    //                         //we'll need to interpolate between two pixels
-
-    //                         //get the indecies that we'll interpolate between
-    //                         rowIndex = j * step;
-    //                         indx1 = static_cast<int>(std::floor(rowIndex));
-    //                         indx2 = static_cast<int>(std::ceil(rowIndex));
-    //                         std::cout << " j: " << j << "rowIndex is: " << rowIndex << " index1: " << indx1 << " index2: " << indx2 << std::endl;
-    //                         //get the fraction of how far we are to the next index so we can interpolate properly
-    //                         perc = rowIndex - static_cast<float>(indx1);
-    //                         if(indx2 > captureDevice.getImgCols() - 1) indx2 = indx1;
-    //                         cv::Vec3b pixel1 = row[static_cast<int>(std::floor(rowIndex))];
-    //                         cv::Vec3b pixel2 = row[static_cast<int>(std::ceil(rowIndex))];
-    //                         //perform the interpolation
-    //                         nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
-    //                         updateLED(j + offsetI, nColor);
-    //                     }
-    //                     std::cout << "step is: " << step << " iterations: " << iterations << " length: " << length << std::endl;
-    //                 } else {
-    //                     //if the step is greater than 1 then that means 
-    //                     //make sure increment is going in correct direction
-    //                     for(int j = startJ; j >= 0 && j <= length; j = j + increment){
-    //                         cv::Vec3b pixel = row[static_cast<int>(std::floor(j * step))];
-    //                         updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         //tv isn't capturing. Maybe do some idle animation here
-    //     }
-    // }
-
 
     //------- DEBUG ------
     void updateDebugPixel(int index, int color){

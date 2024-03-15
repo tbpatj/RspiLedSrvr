@@ -34,7 +34,19 @@ class FrameProcessor {
             }
             
         }
-
+        json getCaptureMappings(){
+            json captureMappings = {
+                {"topS", 0}, // Add a new key-value pair to the JSON object
+                {"topE", iterationsX - 1},
+                {"bottomS", iterationsX},
+                {"bottomE", iterationsX * 2 - 1},
+                {"leftS", iterationsX * 2},
+                {"leftE", iterationsX * 2 + iterationsY - 1},
+                {"rightS", iterationsX * 2 + iterationsY},
+                {"rightE", iterationsX * 2 + iterationsY * 2 - 1}
+                };
+            return captureMappings;
+        }
 
         void getBlurredLength(cv::Mat frame,int iterations,int xStep,int yStep,bool addBase,int padding, int offset){
             int x = addBase && xStep == 0 ? frame.size().width - padding : padding;

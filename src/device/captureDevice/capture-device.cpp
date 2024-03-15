@@ -82,6 +82,10 @@ class CaptureDevice {
             }
         }
 
+        json getCaptureMappings(){
+            return frameProcessor.getCaptureMappings();
+        }
+
         CaptureDevice(){
             try{
                 initCapture();
