@@ -24,7 +24,6 @@ private:
 
         //animation variables
         int animIndx = 0;
-        long long animIndxTime = 1000;
         std::chrono::milliseconds aStart;
         float animT = 0.0f;
         cv::Mat animImage;
@@ -48,6 +47,19 @@ public:
                 }else {
                     updateFromImageAnimation();
                 }
+            }
+        } else {
+            if(t < 1.0f){
+                for(int i = 0; i < ledCount; i++){
+                    updateLED(i, 0, 0, 0);
+                }
+            } else if(t < 2){
+                //just make sure they are turned off all the waqy
+                t=1;
+                for(int i = 0; i < ledCount; i++){
+                    updateLED(i, 0, 0, 0);
+                }
+                t=3;
             }
         }
         //debug options
@@ -76,15 +88,15 @@ public:
         if(settings.mode != -1 && settings.power) {
             //update animation timing
             std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-            animT = static_cast<float>((now - aStart).count()) / animIndxTime;
+            animT = static_cast<float>((now - aStart).count()) / settings.animSpeed;
             
             //if animation should move to next frame move it.
             if(animT >= 1){
                 //reset the start time
                 animT = 1.0f - min(animT,2.0f);
                 // aStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-                std::chrono::milliseconds animIndxTimeMs(static_cast<long long>(animIndxTime * animT));
-                aStart = now - animIndxTimeMs;
+                std::chrono::milliseconds animSpeedMs(static_cast<long long>(settings.animSpeed * animT));
+                aStart = now - animSpeedMs;
 
                 //make sure to add an if to check if it should move to the next frame or if it needs to repeat
 
@@ -168,6 +180,9 @@ public:
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
         //set up the type of the device, if it's null then set it to non-addressable
         type = data["type"].is_null() ? type : (data["type"] == "addressable" ? 1 : 0);
+        //update timings
+        
+        transitionSpeed = data["transition_speed"].is_null() ? transitionSpeed : static_cast<long long>(data["transition_speed"]);
         //set up the preset
         if(!data["preset"].is_null()){
             std::string newPreset = static_cast<std::string>(data["preset"]);
@@ -204,6 +219,7 @@ public:
                 {"settings", settings.getJson()},
                 {"led_count", ledCount},
                 {"preset", preset},
+                {"transition_speed", transitionSpeed},
                 // //depending on the type of the device the pinout will be different so change the response based on that.
                 {"pin_out", type == 1 ? static_cast<json>(pins.getAddressablePinout()) : static_cast<json>(pins.getNonAddressableJson())},
             };

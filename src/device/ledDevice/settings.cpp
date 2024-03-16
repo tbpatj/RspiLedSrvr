@@ -8,6 +8,8 @@ class LedDeviceSettings {
         int mode = -1000;
         bool power;
         int deviceType;
+         //amount of time it takes to move to the next frame in miliseconds
+        long long animSpeed = 1000;
         std::vector<LedDeviceMapping> mappings;
 
     int getModeFromStr(std::string modeStr){
@@ -47,6 +49,8 @@ class LedDeviceSettings {
         mode = data["mode"].is_null() ?  mode : getModeFromStr(static_cast<std::string>(data["mode"]));
         power = data["power"].is_null() ? power : data["power"] == "on" ? true : false;
         deviceName = data["device_name"].is_null() ? (deviceName) : static_cast<std::string>(data["device_name"]);
+        //update timings
+        animSpeed = data["animation_speed"].is_null() ? animSpeed : static_cast<long long>(data["animation_speed"]);
         setMappings(data);
     }
 
@@ -87,7 +91,8 @@ class LedDeviceSettings {
                 {"device_name", deviceName},
                 {"mode", getStrFromMode()},
                 {"power", power ? "on" : "off"},
-                {"mapping", getMappings()}
+                {"mapping", getMappings()},
+                {"animation_speed", animSpeed},
             };
         return data;
     }
