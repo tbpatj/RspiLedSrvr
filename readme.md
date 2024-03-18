@@ -38,6 +38,9 @@ compiling will need \`pkg-config --cflags --libs opencv4\`
 compile script
 g++ main.cpp -o app -I/usr/local/include/opencv4 -std=c++14 \`pkg-config --libs opencv4\`
 
+compiling with led device on raspi
+g++ main.cpp -o app -std=c++14 \`pkg-config --cflags --libs opencv4\` -I/usr/local/include/ws2811 -lws2811 -lstdc++fs
+
 ## Branches
 
 main - main branch where most updates are created but does not have raspberry pi output functionality
