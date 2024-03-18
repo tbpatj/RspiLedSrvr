@@ -1,5 +1,3 @@
-#include "./ledMapping.cpp"
-
 class LedDeviceSettings {
     public:
         std::string name;

@@ -1,5 +1,3 @@
-#include "./pins.cpp"
-#include "./settings.cpp"
 #include "./ledControllers/ledControllers.cpp"
 
 class AddressableLedDevice : public Device {
@@ -19,10 +17,8 @@ private:
         std::vector<int> leds;
         std::vector<int> leds2;
 
-        //transition variables used for when a preset changes
-        std::chrono::milliseconds tStart;
-        float t = 0.0f;
-        long long transitionSpeed = 1000;
+        //transition variables
+        TransitionObject t;
 
         //animation variables
         int animIndx = 0;
@@ -48,22 +44,15 @@ public:
             }else {
                 updateFromImageAnimation();
             }
-        } else {
-            if(t < 1.0f){
-                for(int i = 0; i < ledCount; i++){
-                    updateLED(i, 0, 0, 0);
-                }
-            } else if(t < 2){
-                //just make sure they are turned off all the waqy
-                t=1;
-                for(int i = 0; i < ledCount; i++){
-                    updateLED(i, 0, 0, 0);
-                }
-                t=3;
+            ledController->render();
+        } else if(t.getPercT() < 2.0f){
+            //this block of code is in case we turn the power off on the leds we want to transition to power off and make sure they are turned off all the way
+            if(t.getPercT() >= 1) t.setPercT(1.0f);  //set the transition percentage to 1 so we don't interpolate between some other value
+            for(int i = 0; i < ledCount; i++){
+                updateLED(i, 0, 0, 0);
             }
-            if(t < 2){
-                ledController->render();
-            }
+            if(t.getPercT() >= 1) t.setPercT(3.0f); //if we did reach full power down, make sure to set the percentage to 3 so we don't keep updating the leds in the future
+            ledController->render();
         }
         //debug options
         if(show_LEDS){
@@ -82,12 +71,7 @@ public:
     }
 
     void updateAnimationTiming() {
-        if(t < 1.0f){
-            std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-            t = static_cast<float>((now - tStart).count()) / transitionSpeed;
-            // t = curTime.count() - tStart;
-            if(t >= 1.0f) t = 1.0f;
-        }
+        t.updateTransitionTiming();
         if(settings.mode != -1 && settings.power) {
             //update animation timing
             std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
@@ -113,12 +97,9 @@ public:
         }
     }
 
-    void resetTransitionTiming() {
-         //reset timer for transitions... probably could be moved somewhere else
-        t = 0;
-        // tStart = std::chrono::high_resolution_clock::now();
-        tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-        //set the old leds for a transition
+    void resetTransition() {
+        t.resetTiming();
+        //clear out the leds2 then copy leds into it so then we can transition between what was playing before and what is coming up.
         leds2.clear();
         for(int i = 0; i < leds.size(); i ++){
             leds2.push_back(leds[i]);
@@ -168,7 +149,7 @@ public:
                 int oldMode = settings.mode;
                 preset = newPreset;
                 settings.setData(presets[i].getJson());
-                resetTransitionTiming();
+                resetTransition();
                 if(settings.mode >= 0 && settings.mode < animations.size() && oldMode != settings.mode){
                     resetAnimationTiming();
                 }
@@ -195,8 +176,8 @@ public:
     void setData(json data) override {
         bool updateSettings = true;
     
-        //update timings
-        transitionSpeed = data["transition_speed"].is_null() ? transitionSpeed : static_cast<long long>(data["transition_speed"]);
+        //update transition object
+        t.setData(data);
         //set up the preset
         if(!data["preset"].is_null()){
             std::string newPreset = static_cast<std::string>(data["preset"]);
@@ -218,7 +199,7 @@ public:
             if(!data["settings"]["mode"].is_null() && settings.mode >= 0 && settings.mode < animations.size() && oldMode != settings.mode){
                 resetAnimationTiming();
             }
-            resetTransitionTiming();
+            resetTransition();
 
         }
         pinOut = data["pin_out"].is_null() ? pinOut : static_cast<int>(data["pin_out"]);
@@ -232,7 +213,7 @@ public:
                 {"settings", settings.getJson()},
                 {"led_count", ledCount},
                 {"preset", preset},
-                {"transition_speed", transitionSpeed},
+                {"transition_speed", t.getTransitionSpeed()},
                 // //depending on the type of the device the pinout will be different so change the response based on that.
                 {"pin_out", pinOut},
             };
@@ -241,10 +222,8 @@ public:
 
     AddressableLedDevice(std::string newName, int newType) {
         name = newName;
-        t = 0.0f;
+        t = TransitionObject();
         type = 1;
-        tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-        // settings = new LedDeviceSettings("default", 0, "default", false);
         pinOut = 0;
     }
     AddressableLedDevice(json data) {
@@ -253,13 +232,14 @@ public:
             setType(data);
             setData(data);
             std::cout << "Device: " << name << " type: " << "addressable" << std::endl;
-            t = 0.0f;
+            //initialize the transition object
+            t = TransitionObject();
             //define the actual led controller that utilizes some library or other implementation to control the specific kind of light it is
             //currently type is 0 just due to no other type of addressable led being implemented
             if(type == 1){
                 ledController = new WS2811xController(pinOut, ledCount);
             }
-            tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            
             if(show_LEDS) ledImage = cv::Mat::zeros(cv::Size(ledCount,1), CV_8UC3); // Update to use 3 color channels (CV_8UC3) instead of grayscale (0)
         }catch(const json::exception& e){
             std::cerr << "Error parsing JSON: " << e.what() << std::endl;
@@ -269,8 +249,8 @@ public:
 
     //update the LED with a integer that stores r g and b values
     void updateLED(int index, int color){
-        if(t < 1){
-            int nColor = interpolate(leds2[index], color, t);
+        if(t.getPercT() < 1){
+            int nColor = interpolate(leds2[index], color, t.getPercT());
             leds[index] = nColor;
             
         } else leds[index] = color;
@@ -280,8 +260,8 @@ public:
     }
 
     void updateLED(int index, int r, int g, int b){
-        if(t < 1){
-            int nColor = interpolate(leds2[index], r, g, b, t);
+        if(t.getPercT() < 1){
+            int nColor = interpolate(leds2[index], r, g, b, t.getPercT());
             leds[index] = nColor;
             
         } else leds[index] = (r << 16) | (g << 8) | (b);

@@ -32,7 +32,7 @@ std::vector<Preset> presets;
 
 //Actual code
 #include "./src/device/device.cpp"
-#include "./src/device/ledDevice/addressableLedDevice.cpp"
+#include "./src/device/ledDevice/ledDevices.cpp"
 
 // global declaration of devices
 std::vector<std::unique_ptr<Device>> devices;
