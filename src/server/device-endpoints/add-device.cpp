@@ -4,8 +4,10 @@ void InitAddDevice() {
          try {
             json requestJson = json::parse(req.body);
             try{
-                devices.push_back(std::make_unique<LedDevice>(requestJson));
-                presets.push_back(Preset(requestJson["settings"]));
+                if(requestJson["type"] == "addressable"){
+                    devices.push_back(std::make_unique<AddressableLedDevice>(requestJson));
+                    presets.push_back(Preset(requestJson["settings"]));
+                }
             }catch(const json::exception& e){
                 std::cerr << "Error parsing JSON: " << e.what() << std::endl;
                 res.status = 400;  // Bad Request

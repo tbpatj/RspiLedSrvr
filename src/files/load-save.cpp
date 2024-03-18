@@ -10,8 +10,8 @@ void loadDevices() {
         json devicesJson = json::parse(content);
         for (json::iterator it = devicesJson.begin(); it != devicesJson.end(); ++it) {
             std::string type = it.value()["type"];
-            if(type == "addressable" || type == "non-addressable"){
-                std::unique_ptr<Device> ledDevice = std::make_unique<LedDevice>(it.value());
+            if(type == "addressable"){
+                std::unique_ptr<Device> ledDevice = std::make_unique<AddressableLedDevice>(it.value());
                 devices.push_back(std::move(ledDevice));
             }
         }

@@ -15,6 +15,7 @@ using json = nlohmann::json;
 const bool show_processed_image = true;
 const bool show_webcam_feed = false;
 const bool show_LEDS = true;
+const bool show_animation = true;
 const bool write_frame_proccessor_data = false;
 
 #include "./src/utils/utils.cpp"
@@ -31,7 +32,7 @@ std::vector<Preset> presets;
 
 //Actual code
 #include "./src/device/device.cpp"
-#include "./src/device/ledDevice/ledDevice.cpp"
+#include "./src/device/ledDevice/addressableLedDevice.cpp"
 
 // global declaration of devices
 std::vector<std::unique_ptr<Device>> devices;
