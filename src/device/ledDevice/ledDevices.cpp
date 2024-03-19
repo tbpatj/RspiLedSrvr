@@ -1,4 +1,5 @@
 #include "../transitionObject.cpp"
+#include "../animationObject.cpp"
 #include "./ledMapping.cpp"
 #include "./settings.cpp"
 #include "./addressableLedDevice.cpp"

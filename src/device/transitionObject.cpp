@@ -26,7 +26,7 @@ class TransitionObject {
             tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         }
 
-        void updateTransitionTiming() {
+        void updateTiming() {
             //if the timing object is less than one then we are still transitioning so keep updating the percentage of the transition
             if(t < 1.0f){
                 //get the current time since a specific time a while ago...
