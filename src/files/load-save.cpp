@@ -13,6 +13,9 @@ void loadDevices() {
             if(type == "addressable"){
                 std::unique_ptr<Device> ledDevice = std::make_unique<AddressableLedDevice>(it.value());
                 devices.push_back(std::move(ledDevice));
+            } else if(type == "non-addressable"){
+                std::unique_ptr<Device> ledDevice = std::make_unique<NonAddressableLedDevice>(it.value());
+                devices.push_back(std::move(ledDevice));
             }
         }
     }

@@ -7,6 +7,9 @@ void InitAddDevice() {
                 if(requestJson["type"] == "addressable"){
                     devices.push_back(std::make_unique<AddressableLedDevice>(requestJson));
                     presets.push_back(Preset(requestJson["settings"]));
+                } else if(requestJson["type"] == "non-addressable"){
+                    devices.push_back(std::make_unique<NonAddressableLedDevice>(requestJson));
+                    presets.push_back(Preset(requestJson["settings"]));
                 }
             }catch(const json::exception& e){
                 std::cerr << "Error parsing JSON: " << e.what() << std::endl;

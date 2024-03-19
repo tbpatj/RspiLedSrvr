@@ -7,6 +7,19 @@ class AnimationObject {
         int cCols = 0;
         
     public: 
+        AnimationObject(){
+            animIndx = 0;
+            aStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            animT = 0.0f;
+        }
+
+        AnimationObject(int mode){
+            animIndx = 0;
+            aStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            animT = 0.0f;
+             animImage = animations[mode].getAnimation();
+        }
+
         void setAnimIndx(int indx){
             animIndx = indx;
         }
@@ -49,8 +62,8 @@ class AnimationObject {
             }
         }
 
-        void resetTiming(int animI) {
-            animImage = animations[animI].getAnimation();
+        void resetTiming(int mode) {
+            animImage = animations[mode].getAnimation();
             //if the new animation that is loaded up is smaller than the last then we will need to move the current frame potentially.
             if(animIndx >= animImage.rows) {
                 animT = 0;
