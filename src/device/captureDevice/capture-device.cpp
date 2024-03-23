@@ -112,7 +112,6 @@ class CaptureDevice {
                     return true;
                     // std::cout << " stage " << section << " red " << static_cast<int>(framePixel[2]) << " green " << static_cast<int>(framePixel[1]) << " blue " << static_cast<int>(framePixel[0]) <<  std::endl;
                 }
-                std::cout << "signal";
                 tv_no_signal = false;
             }
             return false;
