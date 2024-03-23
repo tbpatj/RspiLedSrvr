@@ -29,6 +29,7 @@ public:
         if(settings.power){
             //-1 is the tv mode
             if(settings.mode == -1){
+                using_webcam = true;
                 //we need to get a specific pixel here
                 // a.setAnimImage(captureDevice.getImage());
                 a.setAnimIndx(0);

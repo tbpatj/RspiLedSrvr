@@ -4,6 +4,22 @@ void InitAddDevice() {
          try {
             json requestJson = json::parse(req.body);
             try{
+                // Check if a device with the same name already exists
+                std::string requestedDeviceName = requestJson["name"];
+                bool deviceExists = false;
+                for (const auto& device : devices) {
+                    if (device->getName() == requestedDeviceName) {
+                        deviceExists = true;
+                        break;
+                    }
+                }
+                if (deviceExists) {
+                    // Device with the same name already exists
+                    json response = CreateResponse(false, "Device with the same name already exists", "400", requestJson);
+                    res.set_content(response.dump(), "application/json"); // Convert response to string and send as JSON
+                    return;
+                }
+                
                 if(requestJson["type"] == "addressable"){
                     devices.push_back(std::make_unique<AddressableLedDevice>(requestJson));
                     presets.push_back(Preset(requestJson["settings"]));

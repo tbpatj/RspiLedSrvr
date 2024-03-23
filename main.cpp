@@ -18,6 +18,9 @@ const bool show_LEDS = true;
 const bool show_animation = true;
 const bool write_frame_proccessor_data = false;
 
+//Capture device variable
+bool using_webcam = false;
+
 #include "./src/utils/utils.cpp"
 
 #include "./src/device/captureDevice/capture-device.cpp"
@@ -56,7 +59,7 @@ int main(){
      //inital content loading
     while(running == 1){
         //run the capture device
-        if(captureDevice.isCapturing){
+        if(captureDevice.isCapturing && using_webcam){
             captureDevice.updateFrame();
             captureDevice.processFrame();
             // if( cv::waitKey (30) >= 0) {
@@ -64,6 +67,7 @@ int main(){
             //     break;
             // };
         }
+        using_webcam = false;
         //run the led devices
         for (int i = 0; i < devices.size(); i++) {
             devices[i]->update();

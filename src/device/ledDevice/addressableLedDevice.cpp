@@ -34,6 +34,7 @@ public:
         if(settings.power){
             //-1 is the tv mode
             if(settings.mode == -1){
+                using_webcam = true;
                 a.setAnimImage(captureDevice.getImage());
                 a.setAnimIndx(0);
                 updateFromImageAnimation();
