@@ -261,78 +261,78 @@ public:
         //get current frame interpolated and stuff
         cv::Mat frame = a.getCurFrame();
         cv::Vec3b* row = frame.ptr<cv::Vec3b>(0);
+        if(a.getCCols() > 0){
+            //set up the start of the mapping loops
+            int start = 0;
+            int end = 0;
+            int startMapIndx = 0;
+            int length = 0;
+            int increment = 1;
+            int startJ = 0;
+            int iterations = 0;
+            int offsetI = 0;
+            float step = 1.0f;
 
-        //set up the start of the mapping loops
-        int start = 0;
-        int end = 0;
-        int startMapIndx = 0;
-        int length = 0;
-        int increment = 1;
-        int startJ = 0;
-        int iterations = 0;
-        int offsetI = 0;
-        float step = 1.0f;
-
-        for (int i = 0; i < settings.mappings.size(); i++) {
-            start = settings.mappings[i].ledSIndx;
-            end = settings.mappings[i].ledEIndx;
-            iterations = min(std::abs(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx),a.getCCols());
-            startMapIndx = min(settings.mappings[i].mapEIndx, settings.mappings[i].mapSIndx);
-            //set up the loop values so we go in the correct direction
-            length = min(end, ledCount) - min(start,ledCount);
-            if(length < 0){
-                increment = -1;
-                //since length is less than 0 we need to negate it. techically an abs function
-                length = std::abs(length);
-                startJ = length - 1;
-                offsetI = end;
-            } else {
-                increment = 1;
-                startJ = 0;
-                offsetI = start;
-            }
-            step = static_cast<float>(iterations) / (length == 0 ? 1.0f : length);
-            if(step < 1){ //we'll need to interpolate between two pixels
-                // //initialize variable declarations before looping
-                float rowIndex = 0.0f;
-                int indx1 = 0;
-                int indx2 = 0;
-                float perc = 0.0f;
-                int nColor = 0;
-                int stepI = 0;
-                for(int j = startJ; j >= 0 && j < length && j + offsetI < ledCount; j = j + increment){
-                    //get the indecies that we'll interpolate between
-                    rowIndex = static_cast<float>(stepI) * step;
-                    indx1 = static_cast<int>(std::floor(rowIndex));
-                    indx2 = static_cast<int>(std::ceil(rowIndex)) + startMapIndx;
-                    //get the fraction of how far we are to the next index so we can interpolate properly
-                    perc = rowIndex - static_cast<float>(indx1);
-                    indx1 += startMapIndx;
-                    if(indx1 > a.getCCols() - 1) indx1 = 0;
-                    if(indx2 > a.getCCols() - 1) indx2 = indx1;
-                    cv::Vec3b pixel1 = row[indx1];
-                    cv::Vec3b pixel2 = row[indx2];
-                    //perform the interpolation
-                    nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
-                    updateLED(j + offsetI, nColor);
-                    //update the step counter
-                    stepI ++;
+            for (int i = 0; i < settings.mappings.size(); i++) {
+                start = settings.mappings[i].ledSIndx;
+                end = settings.mappings[i].ledEIndx;
+                iterations = min(std::abs(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx),a.getCCols());
+                startMapIndx = min(settings.mappings[i].mapEIndx, settings.mappings[i].mapSIndx);
+                //set up the loop values so we go in the correct direction
+                length = min(end, ledCount) - min(start,ledCount);
+                if(length < 0){
+                    increment = -1;
+                    //since length is less than 0 we need to negate it. techically an abs function
+                    length = std::abs(length);
+                    startJ = length - 1;
+                    offsetI = end;
+                } else {
+                    increment = 1;
+                    startJ = 0;
+                    offsetI = start;
                 }
-            } else {
-                int stepI = 0;
-                //if the step is greater than 1 then that means no interpolation is required
-                //make sure increment is going in correct direction
-                for(int j = startJ; j >= 0 && j < length; j = j + increment){
-                    int rowI = static_cast<int>(std::round(stepI * step)) + startMapIndx;
-                    if(rowI > a.getCCols() - 1) rowI = 0;
-                    cv::Vec3b pixel = row[rowI];
-                    // std::cout << j << " rowI: " << rowI << " colors: R: " << pixel[2] << " G: " << pixel[1] << " B: " << pixel[0] << std::endl;
-                    updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
-                    stepI ++;
+                step = static_cast<float>(iterations) / (length == 0 ? 1.0f : length);
+                if(step < 1){ //we'll need to interpolate between two pixels
+                    // //initialize variable declarations before looping
+                    float rowIndex = 0.0f;
+                    int indx1 = 0;
+                    int indx2 = 0;
+                    float perc = 0.0f;
+                    int nColor = 0;
+                    int stepI = 0;
+                    for(int j = startJ; j >= 0 && j < length && j + offsetI < ledCount; j = j + increment){
+                        //get the indecies that we'll interpolate between
+                        rowIndex = static_cast<float>(stepI) * step;
+                        indx1 = static_cast<int>(std::floor(rowIndex));
+                        indx2 = static_cast<int>(std::ceil(rowIndex)) + startMapIndx;
+                        //get the fraction of how far we are to the next index so we can interpolate properly
+                        perc = rowIndex - static_cast<float>(indx1);
+                        indx1 += startMapIndx;
+                        if(indx1 > a.getCCols() - 1) indx1 = 0;
+                        if(indx2 > a.getCCols() - 1) indx2 = indx1;
+                        cv::Vec3b pixel1 = row[indx1];
+                        cv::Vec3b pixel2 = row[indx2];
+                        //perform the interpolation
+                        nColor = interpolate(pixel1[2], pixel1[1], pixel1[0], pixel2[2], pixel2[1], pixel2[0], perc);
+                        updateLED(j + offsetI, nColor);
+                        //update the step counter
+                        stepI ++;
+                    }
+                } else {
+                    int stepI = 0;
+                    //if the step is greater than 1 then that means no interpolation is required
+                    //make sure increment is going in correct direction
+                    for(int j = startJ; j >= 0 && j < length; j = j + increment){
+                        int rowI = static_cast<int>(std::round(stepI * step)) + startMapIndx;
+                        if(rowI > a.getCCols() - 1) rowI = 0;
+                        cv::Vec3b pixel = row[rowI];
+                        // std::cout << j << " rowI: " << rowI << " colors: R: " << pixel[2] << " G: " << pixel[1] << " B: " << pixel[0] << std::endl;
+                        updateLED(j + offsetI, pixel[2], pixel[1], pixel[0]);
+                        stepI ++;
+                    }
                 }
             }
         }
-        
     }
 
     //------- DEBUG ------

@@ -20,6 +20,8 @@ const bool write_frame_proccessor_data = false;
 
 //Capture device variable
 bool using_webcam = false;
+bool tv_sleeping = false;
+bool tv_no_signal = false;
 
 #include "./src/utils/utils.cpp"
 
@@ -67,6 +69,7 @@ int main(){
             //     break;
             // };
         }
+        std::cout << tv_no_signal << " " << tv_sleeping << std::endl;
         using_webcam = false;
         //run the led devices
         for (int i = 0; i < devices.size(); i++) {

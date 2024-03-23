@@ -51,18 +51,19 @@ class FrameProcessor {
         void getBlurredLength(cv::Mat frame,int iterations,int xStep,int yStep,bool addBase,int padding, int offset){
             int x = addBase && xStep == 0 ? frame.size().width - padding : padding;
             int y = addBase && yStep == 0 ? frame.size().height - padding : padding;
-            
-            for(int i = 0; i < iterations; i ++){
-                cv::Rect roi(static_cast<int>(x + (i * stepX * xStep) - padding), static_cast<int>(y + (i * stepY * yStep) - padding), padding, padding);
-                cv::Mat roiImage = frame(roi);
+            if(frame.cols > 0 && frame.rows > 0){
+                for(int i = 0; i < iterations; i ++){
+                    cv::Rect roi(static_cast<int>(x + (i * stepX * xStep) - padding), static_cast<int>(y + (i * stepY * yStep) - padding), padding, padding);
+                    cv::Mat roiImage = frame(roi);
 
-                cv::Scalar averageColor = cv::mean(roiImage); // Calculate the average color of the ROI section
+                    cv::Scalar averageColor = cv::mean(roiImage); // Calculate the average color of the ROI section
 
-                // Create a single-pixel image with the average color
-                cv::Vec3b& pixel = newImage.at<cv::Vec3b>(0,i + offset);
-                pixel[0] = averageColor[0]; // Blue channel
-                pixel[1] = averageColor[1]; // Green channel
-                pixel[2] = averageColor[2]; // Red channel
+                    // Create a single-pixel image with the average color
+                    cv::Vec3b& pixel = newImage.at<cv::Vec3b>(0,i + offset);
+                    pixel[0] = averageColor[0]; // Blue channel
+                    pixel[1] = averageColor[1]; // Green channel
+                    pixel[2] = averageColor[2]; // Red channel
+                }
             }
         }
 
