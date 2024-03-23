@@ -1,6 +1,7 @@
 class Device {
     protected:
         std::string name;
+        std::string preset = "default";
         //0 for non-addressable LED
         //1 for addressable LED
         int type;
@@ -9,7 +10,13 @@ class Device {
         virtual void update() = 0;
         virtual json getJson() = 0;
         virtual void setData( json data) = 0;
-        virtual void setPreset(std::string presetName) = 0;
+        virtual void setPreset(std::string presetName){
+            this->preset = presetName;
+        }
+
+        virtual std::string getPreset() {
+            return preset;
+        }
 
         virtual void setName(std::string name) {
             this->name = name;
@@ -17,6 +24,10 @@ class Device {
         virtual std::string getName() {
             return name;
         };
+
+        virtual int usingTV(){
+            return 0;
+        }
 
         //type declarations
         virtual int getIntType(){

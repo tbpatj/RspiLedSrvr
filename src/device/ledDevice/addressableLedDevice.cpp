@@ -9,7 +9,6 @@ private:
         LedDeviceSettings settings = LedDeviceSettings("default", 0, -1000, false);
         int pinOut;
         int ledCount;
-        std::string preset = "default";
 
         LedController* ledController; // Declare a pointer to the abstract class
 
@@ -61,6 +60,10 @@ public:
                 };
             }
         }
+    }
+
+    int usingTV() override {
+        return settings.mode == -1;
     }
     
     void setPreset(std::string presetName) override {

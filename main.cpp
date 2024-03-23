@@ -43,6 +43,10 @@ std::vector<Preset> presets;
 std::vector<std::unique_ptr<Device>> devices;
 int running = 1;
 
+//load in the sleep controller
+#include "./src/sleeping/sleepController.cpp"
+SleepController sleepController;
+
 // Load and Save Scripts
 #include "./src/files/load-save.cpp"
 
@@ -69,7 +73,7 @@ int main(){
             //     break;
             // };
         }
-        std::cout << tv_no_signal << " " << tv_sleeping << std::endl;
+        sleepController.update();
         using_webcam = false;
         //run the led devices
         for (int i = 0; i < devices.size(); i++) {

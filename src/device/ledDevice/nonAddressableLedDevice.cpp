@@ -57,6 +57,10 @@ public:
         preset = presetName;
     }
 
+    int usingTV() override {
+        return settings.mode == -1;
+    }
+
     void updateTiming() {
         t.updateTiming();
         if(settings.mode != -1 && settings.power) {
