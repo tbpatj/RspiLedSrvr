@@ -11,7 +11,7 @@ class WS2811xController : public LedController {
             // ledstring.dmanum = 10; // Choose a DMA channel
 
             // channel = &ledstring.channel[0];
-            // channel->gpionum = pins.getAddressablePinout();
+            // channel->gpionum = pinOut;
             // channel->count = ledCount;
             // channel->invert = 0;
             // channel->brightness = 255;
