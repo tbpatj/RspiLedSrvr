@@ -2,5 +2,6 @@
 #include "../animationObject.cpp"
 #include "./ledMapping.cpp"
 #include "./settings.cpp"
+#include "./nonAddressableLed/nonAddressableController.cpp"
 #include "./addressableLedDevice.cpp"
-#include "./nonAddressableLedDevice.cpp"
+#include "./nonAddressableLed/nonAddressableLedDevice.cpp"

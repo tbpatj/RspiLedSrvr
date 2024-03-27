@@ -2,9 +2,7 @@ class NonAddressableLedDevice : public Device {
 private:
         //we initialize the mode parameter with -1000 so we know it hasn't been intitalized, since 0 and -1 are used
         LedDeviceSettings settings = LedDeviceSettings("default", 0, -1000, false);
-        int rPin;
-        int gPin;
-        int bPin;
+        NonAddressableController* nac;
 
         std::string preset = "default";
 
@@ -31,9 +29,9 @@ public:
             if(settings.mode == -1){
                 using_webcam = true;
                 //we need to get a specific pixel here
-                // a.setAnimImage(captureDevice.getImage());
+                a.setAnimImage(captureDevice.getImage());
                 a.setAnimIndx(0);
-                // updateFromImageAnimation();
+                updateFromImageAnimation();
             }else {
                 updateFromImageAnimation();
             }
@@ -96,20 +94,7 @@ public:
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
     }
 
-    void setPinOut(json data){
-        rPin = data["r_pin"].is_null() ? rPin : static_cast<int>(data["r_pin"]);
-        gPin = data["g_pin"].is_null() ? gPin : static_cast<int>(data["g_pin"]);
-        bPin = data["b_pin"].is_null() ? bPin : static_cast<int>(data["b_pin"]);
-    }
-
-    json getPinOut() {
-        json data = {
-            {"r_pin", rPin},
-            {"g_pin", gPin},
-            {"b_pin", bPin}
-        };
-        return data;
-    } 
+   
 
     void setData(json data) override {
         bool updateSettings = true;
@@ -139,7 +124,7 @@ public:
 
         }
         //set up the pinout
-        if(!data["pin_out"].is_null()) setPinOut(data["pin_out"]);
+        if(!data["pin_out"].is_null()) nac->setPins(data["pin_out"]);
     }
 
     json getJson() override {
@@ -151,7 +136,7 @@ public:
                 {"preset", preset},
                 {"transition_speed", t.getTransitionSpeed()},
                 // //depending on the type of the device the pinout will be different so change the response based on that.
-                {"pin_out", getPinOut()},
+                {"pin_out", nac->getPinsJson()},
             };
         return data;
     }
@@ -160,16 +145,21 @@ public:
         name = newName;
         t = TransitionObject();
         type = 0;
-        rPin = 0;
-        gPin = 0;
-        bPin = 0;
+        if(type == 0){
+            nac = new NonAddressableController();
+        }
     }
     NonAddressableLedDevice(json data) {
         try{
             setName(data);
             type = 0;
+            if(type == 0){
+                nac = new NonAddressableController();
+            }
             setData(data);
             std::cout << "Device: " << name << " type: " << "non-addressable" << std::endl;
+
+            
             //initialize the transition object
             t = TransitionObject();
             a = AnimationObject();
@@ -186,6 +176,7 @@ public:
             rgb = nColor;
             
         } else rgb = cv::Vec3i(r,g,b);
+        nac->setColor(rgb[0], rgb[1], rgb[2]);
         //debug option to show the leds in an image
         if(show_LEDS) updateDebugPixel(rgb);
     }
@@ -208,13 +199,30 @@ public:
         //get current frame interpolated and stuff
         cv::Mat frame = a.getCurFrame();
         cv::Vec3b* row = frame.ptr<cv::Vec3b>(0);
-        if(settings.mappings.size() > 0){
-            int indx = settings.mappings[0].mapSIndx;
-            if(indx >= a.getCCols()) indx = a.getCCols() - 1;
-            if(indx < 0) indx = 0;
-            cv::Vec3b pixel = row[indx];
-            updateRGB(pixel[2], pixel[1], pixel[0]);
+        cv::Vec3b pixel = cv::Vec3b(0,0,0);
+
+        //get the average of the colors in the mapping
+        for(int i = 0; i < settings.mappings.size(); i ++){
+            int mapS = settings.mappings[i].mapSIndx;
+            int mapE = settings.mappings[i].mapEIndx;
+            if(mapS >= a.getCCols()) mapS = a.getCCols() - 1;
+            if(mapE >= a.getCCols()) mapE = a.getCCols() - 1;
+            if(mapS < 0) mapS = 0;
+            if(mapE < 0) mapE = 0;
+            int start = min(mapS, mapE);
+            int end = max(mapS, mapE);
+            for(int j = start; j <= end; j ++){
+                if(j == start && i == 0){
+                    pixel = row[j];
+                } else {
+                    cv::Vec3b nPixel = row[j];
+                    pixel[0] = (pixel[0] + nPixel[0]) / 2;
+                    pixel[1] = (pixel[1] + nPixel[1]) / 2;
+                    pixel[2] = (pixel[2] + nPixel[2]) / 2;
+                }
+            }
         }
+        updateRGB(pixel[2], pixel[1], pixel[0]);
     }
 
     //------- DEBUG ------
