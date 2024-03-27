@@ -35,11 +35,13 @@ public:
             }else {
                 updateFromImageAnimation();
             }
+            nac->render();
         } else if(t.getPercT() < 2.0f){
             //this block of code is in case we turn the power off on the leds we want to transition to power off and make sure they are turned off all the way
             if(t.getPercT() >= 1) t.setPercT(1.0f);  //set the transition percentage to 1 so we don't interpolate between some other value
             updateRGB(0, 0, 0);
             if(t.getPercT() >= 1) t.setPercT(3.0f); //if we did reach full power down, make sure to set the percentage to 3 so we don't keep updating the leds in the future
+             nac->render();
         }
         //debug options
         if(show_LEDS){
