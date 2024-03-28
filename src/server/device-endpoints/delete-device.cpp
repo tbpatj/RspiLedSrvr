@@ -3,7 +3,7 @@ void InitDeleteDevice() {
         res.set_header("Access-Control-Allow-Origin", "http://localhost:3000");
         //get the name param from the endpoint
         std::smatch matches;
-        std::regex_match(req.path, matches, std::regex(R"(/updateDevice/(\w+))"));
+        std::regex_match(req.path, matches, std::regex(R"(/devices/delete/(\w+))"));
         //if no name param was supplied then return back
         if(matches.size() <= 1){
             res.status = 404;  // Not Found
@@ -42,7 +42,7 @@ void InitDeleteDevice() {
             try{
                //delete the device from our devices list
                 for (int i = presets.size() - 1; i >= 0; i--) {
-                    if (presets[i]->getName() == name && presets[i]->getStrType() == type){
+                    if (presets[i].getDeviceName() == name && presets[i].getDeviceType() == type){
                         presets.erase(presets.begin() + i);
                     }
                 }
@@ -57,6 +57,7 @@ void InitDeleteDevice() {
                 return;
             }
             saveDevices();
+            savePresets();
             json response = CreateResponse(true, "Device deleted successfully", "200", requestJson);
             res.set_content(response.dump(), "application/json"); // Convert response to string and send as JSON
          }catch(const json::exception& e){
