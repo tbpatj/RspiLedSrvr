@@ -1,8 +1,8 @@
 # Running on your machine.
 
-If you download the application you will need to build the front end and put that in the the same folder as the executable
-Front End Code: https://github.com/tbpatj/raspi-led-display-site - build by running `npm run build`
-You will also need a folder /resources/animations within the same directory as the executable
+If you download the application you will need to build the front end and put the build folder in the the same folder as the executable
+Front End Code: https://github.com/tbpatj/raspi-led-display-site - build by running `npm run build` after you have installed node.js
+You will also need a folder `./resources/animations` within the same directory as the executable this will hold all the animation images
 
 # Libraries used
 
@@ -14,10 +14,19 @@ HTTP Server Library
 https://github.com/yhirose/cpp-httplib
 installed using the single_include file `./resources/httplib.h`
 
+RPI_WS281x
+https://github.com/jgarff/rpi_ws281x
+Follow the instructions for the building with cMake
+
 ## open cv installation
 
 OpenCV Library
 https://github.com/opencv/opencv/tree/4.x
+
+## PiGPIO installation
+
+instructions can be found at this website
+https://abyz.me.uk/rpi/pigpio/download.html
 
 ### mac
 
