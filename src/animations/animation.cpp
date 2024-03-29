@@ -1,8 +1,8 @@
 class Animation {
     private:
         std::string name;
-    public:
         std::string extension;
+    public:
         cv::Mat animation;
         bool animationLoaded;
 
@@ -17,6 +17,10 @@ class Animation {
 
         std::string getName() {
             return name;
+        }
+
+        std::string getExtension(){
+            return extension;
         }
 
         cv::Mat getAnimation() {

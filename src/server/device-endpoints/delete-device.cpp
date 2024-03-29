@@ -7,7 +7,7 @@ void InitDeleteDevice() {
         //if no name param was supplied then return back
         if(matches.size() <= 1){
             res.status = 404;  // Not Found
-            json response = CreateResponse(false, "not enough info was passed in the endpoint. Use as /updateDevice/:name", "404");
+            json response = CreateResponse(false, "not enough info was passed in the endpoint. Use as /devices/delete/:name", "404");
             res.set_content(response.dump(), "application/json");
             return;
         }
