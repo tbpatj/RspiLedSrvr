@@ -159,7 +159,6 @@ class CaptureDevice {
                 last_frame_pixel_locations.push_back(cv::Vec2i(0, 0));
                 last_frame_pixels.push_back(cv::Vec3b(0,0,0));
             }
-            std::cout<< "size " << last_frame_pixels.size() << std::endl;
         }
 
         void processFrame() {
