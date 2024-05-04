@@ -192,6 +192,14 @@ class CaptureDevice {
             return frameProcessor.getCaptureMappings();
         }
 
+        json getJson() {
+            return frameProcessor.getJson();
+        }
+
+        void setData(json data) {
+            frameProcessor.setData(data);
+        }
+
         CaptureDevice(){
             try{
                 initCapture();

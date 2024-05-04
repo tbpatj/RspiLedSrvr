@@ -1,7 +1,8 @@
 #include "./file-manage.cpp"
 
-FileManage devicesManager = FileManage("devices.json");
-FileManage presetsManager = FileManage("presets.json");
+FileManage devicesManager = FileManage("resources/devices.json");
+FileManage presetsManager = FileManage("resources/presets.json");
+FileManage tvSettingsManager = FileManage("resources/tv_settings.json");
 
 void loadDevices() {
     std::cout << "-------- Loading Devices ---------" << std::endl;
@@ -45,6 +46,7 @@ void loadPresets() {
     std::cout << "----------------------------------\n" << std::endl;
 }
 
+
 void savePresets() {
     json presetsJson = json::array();
     for (int i = 0; i < presets.size(); i++) {
@@ -53,7 +55,23 @@ void savePresets() {
     presetsManager.write(presetsJson.dump());
 }
 
+void loadTVSettings() {
+    std::cout << "-------- Loading TV Settings ---------" << std::endl;
+    std::string content = tvSettingsManager.read();
+    if(content != ""){
+        json tvSettingsJson = json::parse(content);
+        captureDevice.setData(tvSettingsJson);
+    }
+    // std::cout << "----------------------------------\n" << std::endl;
+}
+
+void saveTVSettings() {
+    json tvSettings = captureDevice.getJson();
+    tvSettingsManager.write(tvSettings.dump());
+}
+
 void loadDeviceAndPresets(){
     loadDevices();
     loadPresets();
+    loadTVSettings();
 }

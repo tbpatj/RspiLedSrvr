@@ -1,1 +1,0 @@
-[{"led_count":20,"name":"Test","pin_out":0,"preset":"TV","settings":{"animation_speed":1000,"device_name":"Test","device_type":"addressable","mapping":[{"ledEIndx":10,"ledSIndx":0,"mapEIndx":10,"mapSIndx":0}],"mode":"tv","name":"TV","power":"on"},"transition_speed":1000,"type":"addressable"}]

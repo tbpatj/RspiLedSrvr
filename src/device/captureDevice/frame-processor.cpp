@@ -8,10 +8,15 @@ class FrameProcessor {
         int paddingX;
         int paddingY;
         bool process1Pxl = false;
+        bool updateStep = false;
     
     public:
         //returns true if was able to actually process the frame
         bool process(cv::Mat frame){
+            if(updateStep) {
+                updateStep = false;
+                initStep(frame);
+            }
             if(write_frame_proccessor_data) std::cout << "Processing Frame\n frame width: " << frame.size().width << " frame height: " << frame.size().height << "\niterationsX: " << iterationsX << " iterationsY: " << iterationsY << "\npaddingX: " << paddingX << " paddingY: " << paddingY << "\nstepX: " << stepX << " stepY: " << stepY << std::endl;
             if(stepX != 0 && stepY != 0){
                 //process each side of the frame
@@ -68,12 +73,45 @@ class FrameProcessor {
         }
 
         void initStep(cv::Mat frame){
-            stepX = max(std::floor((frame.cols - paddingX) / iterationsX),0);
-            stepY = max(std::floor((frame.rows - paddingY) / iterationsY),0);
+            if(iterationsX != 0) stepX = max(std::floor((frame.cols - paddingX) / iterationsX),0);
+            else stepX = 0;
+            if(iterationsY != 0) stepY = max(std::floor((frame.rows - paddingY) / iterationsY),0);
+            else stepY = 0;
+            std::cout << "stepX: " << stepX << std::endl;
         }
 
         cv::Mat getImage() {
             return newImage;
+        }
+
+        json getJson() {
+            json data = {
+                    {"padding", {{"x", paddingX},{"y", paddingY}}},
+                    {"iterations", {{"x", iterationsX},{"y", iterationsY}}},
+                    {"step", {{"x", stepX},{"y", stepY}}},
+                    {"process1Pxl", process1Pxl}
+                };
+            return data;
+        }
+        void setData(json data) {
+            // paddingX
+            if(!data["padding"].is_null()){
+                paddingX = data["padding"]["x"].is_null() ? paddingX : static_cast<int>(data["padding"]["x"]);
+                paddingY = data["padding"]["y"].is_null() ? paddingY : static_cast<int>(data["padding"]["y"]);
+            }
+            if(!data["iterations"].is_null()){
+                iterationsX = data["iterations"]["x"].is_null() ? iterationsX : static_cast<int>(data["iterations"]["x"]);
+                iterationsY = data["iterations"]["y"].is_null() ? iterationsY : static_cast<int>(data["iterations"]["y"]);
+            }
+            updateStep = true;
+            // name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
+            // deviceType = data["device_type"].is_null() ?  deviceType : data["device_type"] == "addressable" ? 1 : 0;
+            // mode = data["mode"].is_null() ?  mode : getModeFromStr(static_cast<std::string>(data["mode"]));
+            // power = data["power"].is_null() ? power : data["power"] == "on" ? true : false;
+            // deviceName = data["device_name"].is_null() ? (deviceName) : static_cast<std::string>(data["device_name"]);
+            // //update timings
+            // animSpeed = data["animation_speed"].is_null() ? animSpeed : static_cast<long long>(data["animation_speed"]);
+            // setMappings(data);
         }
 
         FrameProcessor(cv::Mat frame, int inIterationsX, int inIterationsY) {
