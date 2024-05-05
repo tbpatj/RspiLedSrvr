@@ -25,6 +25,10 @@ class Device {
             return name;
         };
 
+        virtual void showMapping(int index){
+            
+        };
+
         virtual int usingTV(){
             return 0;
         }

@@ -22,8 +22,13 @@ private:
         //animation variables
         AnimationObject a;
 
+        //editor transition
+        TransitionObject editorT;
+
         //testing purposes
         cv::Mat ledImage;
+
+        int editIndex = -1;
 
 public:
 
@@ -32,13 +37,39 @@ public:
         updateTiming();
         if(settings.power){
             //-1 is the tv mode
-            if(settings.mode == -1){
-                using_webcam = true;
-                a.setAnimImage(captureDevice.getImage());
-                a.setAnimIndx(0);
-                updateFromImageAnimation();
-            }else {
-                updateFromImageAnimation();
+            if(editIndex >= 0){
+                for(int i = 0; i < ledCount; i++){
+                    if(i >= settings.mappings[editIndex].ledSIndx && i <= settings.mappings[editIndex].ledEIndx){
+                        updateLED(i, 255, 255, 255);
+                        if(t.getPercT() >= 1) leds2[i] = (255 << 16) | (255 << 8) | (255);
+                    } else {
+                        updateLED(i, 0, 0, 0);
+                        if(t.getPercT() >= 1) leds2[i] = (0 << 16) | (0 << 8) | (0);
+                    }
+                }
+                //if we have transitioned long enough then move on
+                editorT.updateTiming();
+                if(editorT.getPercT() >= 1.0f ){
+                    editorT.setPercT(1.0f);
+                    editIndex = -1;
+                    t.resetTiming();
+                }
+            } else if(editIndex == -2) { //editing length mappings, so display the length of leds
+                 for(int i = 0; i < ledCount; i++){
+                    updateLED(i, 255, 255, 255);
+                    if(t.getPercT() >= 1) leds2[i] = (255 << 16) | (255 << 8) | (255);
+                 }
+            } else if(editIndex == -1){
+                //-1 is tv mode so it's set to match the tv
+                if(settings.mode == -1){
+                    using_webcam = true;
+                    a.setAnimImage(captureDevice.getImage());
+                    //make it so it doesn't try to go to the next "frame" of the tv image, which just updates the same frame every time
+                    a.setAnimIndx(0);
+                    updateFromImageAnimation();
+                }else {
+                    updateFromImageAnimation();
+                }
             }
             ledController->render();
         } else if(t.getPercT() < 2.0f){
@@ -123,6 +154,16 @@ public:
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
     }
 
+    void showMapping(int index) override {
+        if(index < settings.mappings.size()){
+            editorT.resetTiming();
+            t.resetTiming();
+            editIndex = index;
+        } else {
+            editIndex = -1;
+        }
+    }
+
     void setData(json data) override {
         bool updateSettings = true;
     
@@ -184,6 +225,7 @@ public:
             std::cout << "Device: " << name << " type: " << "addressable" << std::endl;
             //initialize the transition object
             t = TransitionObject();
+            editorT = TransitionObject(2000);
             //define the actual led controller that utilizes some library or other implementation to control the specific kind of light it is
             //currently type is 0 just due to no other type of addressable led being implemented
             if(type == 1){
@@ -286,13 +328,14 @@ public:
                 if(length < 0){
                     increment = -1;
                     //since length is less than 0 we need to negate it. techically an abs function
-                    length = std::abs(length);
+                    length = min(std::abs(length) + 1, ledCount);
                     startJ = length - 1;
                     offsetI = end;
                 } else {
                     increment = 1;
                     startJ = 0;
                     offsetI = start;
+                    length = min(length + 1, ledCount);
                 }
                 step = static_cast<float>(iterations) / (length == 0 ? 1.0f : length);
                 if(step < 1){ //we'll need to interpolate between two pixels
@@ -303,7 +346,7 @@ public:
                     float perc = 0.0f;
                     int nColor = 0;
                     int stepI = 0;
-                    for(int j = startJ; j >= 0 && j < length && j + offsetI < ledCount; j = j + increment){
+                    for(int j = startJ; j >= 0 && j <= length && j + offsetI < ledCount; j = j + increment){
                         //get the indecies that we'll interpolate between
                         rowIndex = static_cast<float>(stepI) * step;
                         indx1 = static_cast<int>(std::floor(rowIndex));

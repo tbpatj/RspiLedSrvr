@@ -61,6 +61,10 @@ public:
         return settings.mode == -1;
     }
 
+    void showMapping(int index) override {
+        
+    }
+
     void updateTiming() {
         t.updateTiming();
         if(settings.mode != -1 && settings.power) {

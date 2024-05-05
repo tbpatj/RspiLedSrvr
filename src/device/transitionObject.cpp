@@ -10,6 +10,11 @@ class TransitionObject {
             t=0.0f;
             tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         }
+        TransitionObject(long long speed){
+            t=0.0f;
+            transitionSpeed = speed;
+            tStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        }
         void setTransitionSpeed(long long speed){
             transitionSpeed = speed;
         }
