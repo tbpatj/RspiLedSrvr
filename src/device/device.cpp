@@ -29,6 +29,10 @@ class Device {
             
         };
 
+        virtual void showLength() {
+            
+        }
+
         virtual int usingTV(){
             return 0;
         }

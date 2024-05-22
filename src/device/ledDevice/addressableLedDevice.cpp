@@ -154,6 +154,12 @@ public:
         name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
     }
 
+    void showLength() override {
+        editorT.resetTiming();
+        t.resetTiming();
+        editIndex = -2;
+    }
+
     void showMapping(int index) override {
         if(index < settings.mappings.size()){
             editorT.resetTiming();

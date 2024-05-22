@@ -61,6 +61,10 @@ public:
         return settings.mode == -1;
     }
 
+    void showLength() override {
+        
+    }
+
     void showMapping(int index) override {
         
     }
