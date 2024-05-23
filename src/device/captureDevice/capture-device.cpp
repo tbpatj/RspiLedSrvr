@@ -70,6 +70,10 @@ class CaptureDevice {
             return frameProcessor.getImage();
         }
 
+        cv::Mat getMappingsImage() {
+            return frameProcessor.getMappingsImage();
+        }
+
 
         void updateFrame(){
             now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());

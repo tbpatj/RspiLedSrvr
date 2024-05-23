@@ -18,6 +18,11 @@ RPI_WS281x
 https://github.com/jgarff/rpi_ws281x
 Follow the instructions for the building with cMake
 
+WIP
+WS connection
+https://github.com/zaphoyd/websocketpp.git
+Installed an included in the compile instructions
+
 ## open cv installation
 
 OpenCV Library

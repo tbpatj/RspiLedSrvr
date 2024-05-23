@@ -17,7 +17,7 @@ class FrameProcessor {
                 updateStep = false;
                 initStep(frame);
             }
-            if(write_frame_proccessor_data) std::cout << "Processing Frame\n frame width: " << frame.size().width << " frame height: " << frame.size().height << "\niterationsX: " << iterationsX << " iterationsY: " << iterationsY << "\npaddingX: " << paddingX << " paddingY: " << paddingY << "\nstepX: " << stepX << " stepY: " << stepY << std::endl;
+            if(write_frame_proccessor_data) std::cout << "Processing Frame\n frame width: " << frame.size().width << " frame height: " << frame.size().height << "\niterationsX: " << iterationsX << " iterationsY: " << iterationsY << "\npaddingX: " << paddingX << " paddingY: " << paddingY << "\nstepX: " << stepX << " stepY: " << stepY << " New Image: " << newImage.size().width << " " << newImage.size().height << std::endl;
             if(stepX != 0 && stepY != 0){
                 //process each side of the frame
                 //new image is returned on one row in success after each other
@@ -51,6 +51,23 @@ class FrameProcessor {
                 {"rightE", iterationsX * 2 + iterationsY * 2 - 1}
                 };
             return captureMappings;
+        }
+
+        cv::Mat getMappingsImage(){
+            cv::Mat mappingImage = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1), CV_8UC3);
+            //draw the line for the top edge, Red
+            cv::line(mappingImage, cv::Point(0, 0), cv::Point(iterationsX - 1, 0), cv::Scalar(144, 1, 245), 1);
+            //draw the line for the bottom edge Yellow
+            cv::line(mappingImage, cv::Point(iterationsX, 0), cv::Point(iterationsX * 2 - 1, 0), cv::Scalar(255, 1, 120), 1);
+            //draw the line for the left edge
+            cv::line(mappingImage, cv::Point(iterationsX * 2, 0), cv::Point(iterationsX * 2 + iterationsY - 1, 0), cv::Scalar(1, 0, 142), 1);
+            //draw the line for the right edge Blue
+             cv::line(mappingImage, cv::Point(iterationsX * 2 + iterationsY, 0), cv::Point(iterationsX * 2 + iterationsY * 2 - 1, 0), cv::Scalar(254, 0, 234), 1);
+            // Blur the image
+            cv::GaussianBlur(mappingImage, mappingImage, cv::Size(21, 1), 0);
+            // Darken the image
+            mappingImage *= 0.8;
+            return mappingImage;
         }
 
         void getBlurredLength(cv::Mat frame,int iterations,int xStep,int yStep,bool addBase,int padding, int offset){
@@ -102,6 +119,7 @@ class FrameProcessor {
             if(!data["iterations"].is_null()){
                 iterationsX = data["iterations"]["x"].is_null() ? iterationsX : static_cast<int>(data["iterations"]["x"]);
                 iterationsY = data["iterations"]["y"].is_null() ? iterationsY : static_cast<int>(data["iterations"]["y"]);
+                newImage = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1), CV_8UC3);
             }
             updateStep = true;
             // name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);

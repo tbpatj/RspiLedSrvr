@@ -38,15 +38,24 @@ public:
         if(settings.power){
             //-1 is the tv mode
             if(editIndex >= 0){
+                if(settings.mode == -1){
+                    using_webcam = true;
+                    a.setAnimImage(captureDevice.getMappingsImage());
+                    a.setAnimIndx(0);
+                    updateFromImageAnimation();
+                }
                 for(int i = 0; i < ledCount; i++){
                     if(i >= settings.mappings[editIndex].ledSIndx && i <= settings.mappings[editIndex].ledEIndx){
-                        updateLED(i, 255, 255, 255);
-                        if(t.getPercT() >= 1) leds2[i] = (255 << 16) | (255 << 8) | (255);
+                        if(settings.mode != -1){
+                            updateLED(i, 255, 255, 255);
+                        }
+                        if(t.getPercT() >= 1) leds2[i] = leds[i];
                     } else {
                         updateLED(i, 0, 0, 0);
-                        if(t.getPercT() >= 1) leds2[i] = (0 << 16) | (0 << 8) | (0);
+                        if(t.getPercT() >= 1) leds2[i] = leds[i];
                     }
                 }
+                
                 //if we have transitioned long enough then move on
                 editorT.updateTiming();
                 if(editorT.getPercT() >= 1.0f ){
@@ -231,7 +240,7 @@ public:
             std::cout << "Device: " << name << " type: " << "addressable" << std::endl;
             //initialize the transition object
             t = TransitionObject();
-            editorT = TransitionObject(2000);
+            editorT = TransitionObject(3000);
             //define the actual led controller that utilizes some library or other implementation to control the specific kind of light it is
             //currently type is 0 just due to no other type of addressable led being implemented
             if(type == 1){
@@ -323,8 +332,14 @@ public:
             int iterations = 0;
             int offsetI = 0;
             float step = 1.0f;
+            int mappingSize = settings.mappings.size();
+            int mappingIStart = 0;
+            if(editIndex >= 0){
+                mappingSize = editIndex + 1;
+                mappingIStart = editIndex;
+            }
 
-            for (int i = 0; i < settings.mappings.size(); i++) {
+            for (int i = mappingIStart; i < mappingSize; i++) {
                 start = settings.mappings[i].ledSIndx;
                 end = settings.mappings[i].ledEIndx;
                 iterations = min(std::abs(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx),a.getCCols());
