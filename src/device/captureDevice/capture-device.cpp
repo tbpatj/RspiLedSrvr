@@ -8,6 +8,8 @@ class CaptureDevice {
         int numEmptyFrames = 0;
         FrameProcessor frameProcessor;
         int last_frame_checks = 1;
+        int aspectW = 16;
+        int aspectH = 9;
         //time since last frame change
         std::chrono::milliseconds timeSLFC;
         std::chrono::milliseconds now;
@@ -79,8 +81,33 @@ class CaptureDevice {
             now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
             if(isCapturing){
                 cap >> frame;
+                aspectRatio();
                 checkLastFrames();
                 checkSleepTime();
+            }
+        }
+
+        void setAspectRatio(int widthA, int heightA){
+            aspectW = widthA;
+            aspectH = heightA;
+            aspectRatio();
+            frameProcessor.initStep(frame);
+
+        }
+
+        void aspectRatio(){
+            double targetAspectRatio = static_cast<double>(aspectW) / static_cast<double>(aspectH);
+            double currentAspectRatio = static_cast<double>(frame.cols) / static_cast<double>(frame.rows);
+            if (currentAspectRatio > targetAspectRatio) {
+                int newWidth = static_cast<int>(frame.rows * targetAspectRatio);
+                int offsetX = (frame.cols - newWidth) / 2;
+                cv::Rect roi(offsetX, 0, newWidth, frame.rows);
+                frame = frame(roi);
+            } else if (currentAspectRatio < targetAspectRatio) {
+                int newHeight = static_cast<int>(frame.cols / targetAspectRatio);
+                int offsetY = (frame.rows - newHeight) / 2;
+                cv::Rect roi(0, offsetY, frame.cols, newHeight);
+                frame = frame(roi);
             }
         }
 
