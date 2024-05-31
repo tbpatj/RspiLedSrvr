@@ -72,8 +72,11 @@ int main(){
     // } else gpio_initialised = true;
 
     std::thread serverThread(RunLedServer);
+
+    auto nextFrame = std::chrono::steady_clock::now();
      //inital content loading
     while(running == 1){
+        nextFrame += std::chrono::milliseconds(1000 / 60);
         //run the capture device
         if(captureDevice.isCapturing && using_webcam){
             captureDevice.updateFrame();
@@ -89,6 +92,7 @@ int main(){
         for (int i = 0; i < devices.size(); i++) {
             devices[i]->update();
         }
+        std::this_thread::sleep_until(nextFrame);
     }
     saveDevices();
     savePresets();

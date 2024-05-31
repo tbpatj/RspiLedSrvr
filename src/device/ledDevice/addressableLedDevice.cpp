@@ -131,6 +131,7 @@ public:
         ledCount = count;
         leds.resize(ledCount);
         leds2.resize(ledCount);
+        if(show_LEDS) ledImage = cv::Mat::zeros(cv::Size(ledCount,1), CV_8UC3);
     }
 
     void updateSettingsToPreset(std::string newPreset) {

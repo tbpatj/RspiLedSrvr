@@ -94,7 +94,6 @@ class FrameProcessor {
             else stepX = 0;
             if(iterationsY != 0) stepY = max(std::floor((frame.rows - paddingY) / iterationsY),0);
             else stepY = 0;
-            std::cout << "stepX: " << stepX << std::endl;
         }
 
         cv::Mat getImage() {
