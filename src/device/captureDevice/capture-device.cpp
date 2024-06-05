@@ -8,8 +8,8 @@ class CaptureDevice {
         int numEmptyFrames = 0;
         FrameProcessor frameProcessor;
         int last_frame_checks = 1;
-        int aspectW = 16;
-        int aspectH = 9;
+        int aspectW = 0;
+        int aspectH = 0;
         //time since last frame change
         std::chrono::milliseconds timeSLFC;
         std::chrono::milliseconds now;
@@ -96,18 +96,21 @@ class CaptureDevice {
         }
 
         void aspectRatio(){
-            double targetAspectRatio = static_cast<double>(aspectW) / static_cast<double>(aspectH);
-            double currentAspectRatio = static_cast<double>(frame.cols) / static_cast<double>(frame.rows);
-            if (currentAspectRatio > targetAspectRatio) {
-                int newWidth = static_cast<int>(frame.rows * targetAspectRatio);
-                int offsetX = (frame.cols - newWidth) / 2;
-                cv::Rect roi(offsetX, 0, newWidth, frame.rows);
-                frame = frame(roi);
-            } else if (currentAspectRatio < targetAspectRatio) {
-                int newHeight = static_cast<int>(frame.cols / targetAspectRatio);
-                int offsetY = (frame.rows - newHeight) / 2;
-                cv::Rect roi(0, offsetY, frame.cols, newHeight);
-                frame = frame(roi);
+            //by default the aspect ratio is 0,0 which means it will just keep the aspect ratio of the frame
+            if(aspectW != 0 && aspectH != 0){
+                double targetAspectRatio = static_cast<double>(aspectW) / static_cast<double>(aspectH);
+                double currentAspectRatio = static_cast<double>(frame.cols) / static_cast<double>(frame.rows);
+                if (currentAspectRatio > targetAspectRatio) {
+                    int newWidth = static_cast<int>(frame.rows * targetAspectRatio);
+                    int offsetX = (frame.cols - newWidth) / 2;
+                    cv::Rect roi(offsetX, 0, newWidth, frame.rows);
+                    frame = frame(roi);
+                } else if (currentAspectRatio < targetAspectRatio) {
+                    int newHeight = static_cast<int>(frame.cols / targetAspectRatio);
+                    int offsetY = (frame.rows - newHeight) / 2;
+                    cv::Rect roi(0, offsetY, frame.cols, newHeight);
+                    frame = frame(roi);
+                }
             }
         }
 
