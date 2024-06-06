@@ -26,27 +26,7 @@ class FrameProcessor {
                 processWidth(frame, "bottom");
                 processWidth(frame, "left");
                 processWidth(frame, "right");
-
-                
-                // Convert the image to HSV color space
-                cv::Mat hsv;
-                cv::cvtColor(newImage, hsv, cv::COLOR_BGR2HSV);
-                // Split the image into H, S, and V channels
-                std::vector<cv::Mat> channels;
-                cv::split(hsv, channels);
-                // Increase the saturation channel by a certain amount
-                channels[1] += 30;
-                // Ensure that the saturation values are within the valid range
-                channels[1] = cv::min(channels[1], 255);
-                // Apply a threshold to the V channel
-                cv::LUT(channels[2], processingLut, channels[2]);
-                // Merge the channels back into one image
-                cv::merge(channels, hsv);
-                // Convert the image back to BGR color space
-                cv::cvtColor(hsv, newImage, cv::COLOR_HSV2BGR);
-
-                
-
+                postProcessing();
 
                 if(process1Pxl){
                    cv::Scalar averageColor = cv::mean(newImage);
@@ -56,10 +36,30 @@ class FrameProcessor {
             return false;
         }
 
+        void postProcessing() {
+             // Convert the image to HSV color space
+            cv::Mat hsv;
+            cv::cvtColor(newImage, hsv, cv::COLOR_BGR2HSV);
+            // Split the image into H, S, and V channels
+            std::vector<cv::Mat> channels;
+            cv::split(hsv, channels);
+            //commented out saturation for now as it isn't needed
+            // // Increase the saturation channel by a certain amount
+            // channels[1] += 30;
+            // // Ensure that the saturation values are within the valid range
+            // channels[1] = cv::min(channels[1], 255);
+            // Apply a threshold to the V channel
+            cv::LUT(channels[2], processingLut, channels[2]);
+            // Merge the channels back into one image
+            cv::merge(channels, hsv);
+            // Convert the image back to BGR color space
+            cv::cvtColor(hsv, newImage, cv::COLOR_HSV2BGR);
+        }
+
         void initLut(){
                         // Define the threshold and maximum decrease
             int threshold = 70;
-            float maxDecrease = 30.0;
+            float maxDecrease = 38.0;
 
             // Create a lookup table for the V channel adjustment
             cv::Mat lut(1, 256, CV_8U);
@@ -67,7 +67,7 @@ class FrameProcessor {
             for (int i = 0; i < 256; ++i) {
                 if (i < threshold) {
                     float factor = static_cast<float>(threshold - i) / threshold;
-                    float decrease = maxDecrease * factor * factor;
+                    float decrease = maxDecrease * std::pow(factor, 3);
                     p[i] = static_cast<uchar>(std::max(i - static_cast<int>(decrease), 0));
                 } else {
                     p[i] = i;
