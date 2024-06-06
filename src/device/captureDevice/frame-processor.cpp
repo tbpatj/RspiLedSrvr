@@ -5,6 +5,7 @@ class FrameProcessor {
         double stepX;
         double stepY;
         cv::Mat newImage;
+        cv::Mat processingLut;
         int paddingX;
         int paddingY;
         bool process1Pxl = false;
@@ -38,18 +39,7 @@ class FrameProcessor {
                 // Ensure that the saturation values are within the valid range
                 channels[1] = cv::min(channels[1], 255);
                 // Apply a threshold to the V channel
-                cv::Mat mask;
-                cv::threshold(channels[2], mask, 100, 255, cv::THRESH_BINARY_INV);
-               // Create a copy of the V channel
-                cv::Mat vDecreased = channels[2].clone();
-
-                // Decrease the V channel by a certain amount
-                vDecreased -= 30;
-
-                // Use the mask to apply the decrease only to the darker colors
-                cv::bitwise_and(vDecreased, mask, vDecreased);
-                cv::bitwise_and(channels[2], ~mask, channels[2]);
-                channels[2] += vDecreased;
+                cv::LUT(channels[2], processingLut, channels[2]);
                 // Merge the channels back into one image
                 cv::merge(channels, hsv);
                 // Convert the image back to BGR color space
@@ -64,6 +54,26 @@ class FrameProcessor {
                 return true;
             }
             return false;
+        }
+
+        void initLut(){
+                        // Define the threshold and maximum decrease
+            int threshold = 70;
+            float maxDecrease = 30.0;
+
+            // Create a lookup table for the V channel adjustment
+            cv::Mat lut(1, 256, CV_8U);
+            uchar* p = lut.ptr();
+            for (int i = 0; i < 256; ++i) {
+                if (i < threshold) {
+                    float factor = static_cast<float>(threshold - i) / threshold;
+                    float decrease = maxDecrease * factor * factor;
+                    p[i] = static_cast<uchar>(std::max(i - static_cast<int>(decrease), 0));
+                } else {
+                    p[i] = i;
+                }
+            }
+            processingLut = lut;
         }
 
         void processWidth(cv::Mat frame, std::string type){
@@ -142,64 +152,13 @@ class FrameProcessor {
 
                 // Create a single-pixel image with the average color
                 cv::Vec3b& pixel = newImage.at<cv::Vec3b>(0,i + iOffset);
-                pixel[0] = averageColor[0]; // Blue channel
-                pixel[1] = averageColor[1]; // Green channel
-                pixel[2] = averageColor[2]; // Red channel
+                pixel = cv::Vec3b(averageColor[0], averageColor[1], averageColor[2]);
 
                 centerX += sx;
                 centerY += sy;
             }
         }
 
-
-
-        // bool process(cv::Mat frame){
-        //     if(updateStep) {
-        //         updateStep = false;
-        //         initStep(frame);
-        //     }
-        //     if(write_frame_proccessor_data) std::cout << "Processing Frame\n frame width: " << frame.size().width << " frame height: " << frame.size().height << "\niterationsX: " << iterationsX << " iterationsY: " << iterationsY << "\npaddingX: " << paddingX << " paddingY: " << paddingY << "\nstepX: " << stepX << " stepY: " << stepY << " New Image: " << newImage.size().width << " " << newImage.size().height << std::endl;
-        //     if(stepX != 0 && stepY != 0){
-        //         //process each side of the frame
-        //         //new image is returned on one row in success after each other
-        //         //top edge
-        //         getBlurredLength(frame,iterationsX, 1, 0, 0, paddingX, 0);
-        //         // bottom edge
-        //         getBlurredLength(frame,iterationsX, 1, 0, 1, paddingX, iterationsX);
-        //         // left edge
-        //         getBlurredLength(frame,iterationsY, 0, 1, 0, paddingY, iterationsX * 2);
-        //         // right edge
-        //         getBlurredLength(frame,iterationsY, 0, 1, 1, paddingY, iterationsX * 2 + iterationsY);
-        //         if(process1Pxl){
-        //            cv::Scalar averageColor = cv::mean(newImage);
-        //         }
-                
-        //         return true;
-        //     } else {
-        //         return false;
-        //     }
-            
-        // }
-
-
-        // void getBlurredLength(cv::Mat frame,int iterations,int xStep,int yStep,bool addBase,int padding, int offset){
-        //     int x = addBase && xStep == 0 ? frame.size().width - padding : padding;
-        //     int y = addBase && yStep == 0 ? frame.size().height - padding : padding;
-        //     if(frame.cols > 0 && frame.rows > 0){
-        //         for(int i = 0; i < iterations; i ++){
-        //             cv::Rect roi(static_cast<int>(x + (i * stepX * xStep) - padding), static_cast<int>(y + (i * stepY * yStep) - padding), padding, padding);
-        //             cv::Mat roiImage = frame(roi);
-
-        //             cv::Scalar averageColor = cv::mean(roiImage); // Calculate the average color of the ROI section
-
-        //             // Create a single-pixel image with the average color
-        //             cv::Vec3b& pixel = newImage.at<cv::Vec3b>(0,i + offset);
-        //             pixel[0] = averageColor[0]; // Blue channel
-        //             pixel[1] = averageColor[1]; // Green channel
-        //             pixel[2] = averageColor[2]; // Red channel
-        //         }
-        //     }
-        // }
 
         json getCaptureMappings(){
             json captureMappings = {
@@ -281,6 +240,7 @@ class FrameProcessor {
             paddingX = 80;
             paddingY = 80;
             initStep(frame);
+            initLut();
             newImage = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1), frame.type());
           
         }
@@ -290,6 +250,7 @@ class FrameProcessor {
             stepX = 0.0;
             stepY = 0.0;
             newImage = cv::Mat::zeros(cv::Size(10, 10), CV_8UC3);
+            initLut();
             paddingX = 1;
             paddingY = 1;
         }

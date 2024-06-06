@@ -343,7 +343,7 @@ public:
             for (int i = mappingIStart; i < mappingSize; i++) {
                 start = settings.mappings[i].ledSIndx;
                 end = settings.mappings[i].ledEIndx;
-                iterations = min(std::abs(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx),a.getCCols());
+                iterations = min(std::abs(settings.mappings[i].mapEIndx - settings.mappings[i].mapSIndx),a.getCCols() - 1);
                 startMapIndx = min(settings.mappings[i].mapEIndx, settings.mappings[i].mapSIndx);
                 //set up the loop values so we go in the correct direction
                 length = min(end, ledCount) - min(start,ledCount);

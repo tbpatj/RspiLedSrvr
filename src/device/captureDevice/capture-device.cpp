@@ -72,6 +72,10 @@ class CaptureDevice {
             return frameProcessor.getImage();
         }
 
+        cv::Mat getRawFrame() {
+            return frame;
+        }
+
         cv::Mat getMappingsImage() {
             return frameProcessor.getMappingsImage();
         }
@@ -97,21 +101,6 @@ class CaptureDevice {
 
         void aspectRatio(){
             //by default the aspect ratio is 0,0 which means it will just keep the aspect ratio of the frame
-            if(aspectW != 0 && aspectH != 0){
-                double targetAspectRatio = static_cast<double>(aspectW) / static_cast<double>(aspectH);
-                double currentAspectRatio = static_cast<double>(frame.cols) / static_cast<double>(frame.rows);
-                if (currentAspectRatio > targetAspectRatio) {
-                    int newWidth = static_cast<int>(frame.rows * targetAspectRatio);
-                    int offsetX = (frame.cols - newWidth) / 2;
-                    cv::Rect roi(offsetX, 0, newWidth, frame.rows);
-                    frame = frame(roi);
-                } else if (currentAspectRatio < targetAspectRatio) {
-                    int newHeight = static_cast<int>(frame.cols / targetAspectRatio);
-                    int offsetY = (frame.rows - newHeight) / 2;
-                    cv::Rect roi(0, offsetY, frame.cols, newHeight);
-                    frame = frame(roi);
-                }
-            }
         }
 
         void checkSleepTime(){
@@ -199,13 +188,9 @@ class CaptureDevice {
             //x direction
             if(isCapturing){
                 bool isValidStep = frameProcessor.process(frame);
-                //debug for the webcam feed
-                if(show_webcam_feed) cv::imshow("Webcam", frame);
                 
                 if(isValidStep){
                     numEmptyFrames = 0;
-                    //debug for the processed image
-                    if(show_processed_image) cv::imshow("New Image", frameProcessor.getImage());
                     
                 } else {
                     //if the frame size is actually bigger than 0 than lets try to reinitialize the frame processor

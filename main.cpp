@@ -86,6 +86,10 @@ int main(){
             //     break;
             // };
         }
+        //debug for the processed image
+        if(show_processed_image) cv::imshow("New Image", captureDevice.getImage());
+        //debug for the webcam feed
+        if(show_webcam_feed) cv::imshow("Webcam", captureDevice.getRawFrame());
         sleepController.update();
         using_webcam = false;
         //run the led devices
