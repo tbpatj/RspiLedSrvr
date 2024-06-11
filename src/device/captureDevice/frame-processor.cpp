@@ -10,6 +10,9 @@ class FrameProcessor {
         int paddingY;
         bool process1Pxl = false;
         bool updateStep = false;
+        //these offset the start position of the frame mapping, allowing for padding on the edges of screens where if the lights surround an object not directly behind the lights we can account for how far away the lights are from an intended position
+        double offsetSX = 0.0;
+        double offsetSY = 0.0;
     
     public:
         //returns true if was able to actually process the frame
@@ -79,6 +82,8 @@ class FrameProcessor {
         void processWidth(cv::Mat frame, std::string type){
             double centerX = 0.0;
             double centerY = 0.0;
+            int minBoxWidth = paddingX;
+            int minBoxHeight = paddingY;
             int boxWidth = paddingX * 2;
             int boxHeight = paddingY * 2;
             bool adjustedBox = false;
@@ -90,26 +95,26 @@ class FrameProcessor {
             double sy = 0;
             if(type == "top"){
                 iOffset = 0;
-                centerX = 0.0;
+                centerX = 0.0 - offsetSX;
                 centerY = static_cast<double>(paddingY);
                 sx = stepX;
                 iterations = iterationsX;
             } else if(type == "bottom"){
                 iOffset = iterationsX;
-                centerX = 0.0;
+                centerX = 0.0 - offsetSX;
                 centerY = static_cast<double>((frame.rows - 1) - paddingY);
                 sx = stepX;
                 iterations = iterationsX;
             } else if(type == "left"){
                 iOffset = iterationsX * 2;
                 centerX = static_cast<double>(paddingX);
-                centerY = 0.0;
+                centerY = 0.0 - offsetSY;
                 sy = stepY;
                 iterations = iterationsY;
             } else if(type == "right"){
                 iOffset = iterationsX * 2 + iterationsY;
                 centerX = static_cast<double>((frame.cols - 1) - paddingX);
-                centerY = 0.0;
+                centerY = 0.0 - offsetSY;
                 sy = stepY;
                 iterations = iterationsY;
             }
@@ -126,21 +131,21 @@ class FrameProcessor {
                 //keep the box within the bounds of the frame
                 if(x < 0){
                     //since x will be negative we will subtract the boxwidth from it so that it crops the roi to the edge of the frame
-                    boxWidth += x;
+                    boxWidth = min(max(boxWidth + x, minBoxWidth), boundCol);
                     x = 0;
                     adjustedBox = true;
                 } else if(x + boxWidth > boundCol){
                     //since x + boxWidth will be greater than the frame width we will subtract the difference from the boxWidth
-                    boxWidth -= (x + boxWidth) - boundCol;
+                    boxWidth = min(max(boxWidth - ((x + boxWidth) - boundCol), boxWidth), boundCol);
                     x = boundCol - boxWidth;
                     adjustedBox = true;
                 }
                 if(y < 0) {
-                    boxHeight += y;
+                    boxHeight = min(max(boxHeight + y, minBoxHeight), boundRow);
                     y=0;
                     adjustedBox = true;
                 } else if(y + boxHeight > boundRow){
-                    boxHeight -= (y + boxHeight) - boundRow;
+                    boxHeight = min(max(boxHeight - ((y + boxHeight) - boundRow), boxHeight), boundRow); 
                     y = boundRow - boxHeight;
                     adjustedBox = true;
                 }
@@ -192,10 +197,11 @@ class FrameProcessor {
         void initStep(cv::Mat frame){
             // if(iterationsX != 0) stepX = max(std::floor((frame.cols - paddingX) / iterationsX),0);
             //sub one from the iterations as we want it to reach the edge of the frame correctly with that amount of items and starting at 0% and ending at 100%
-            if(iterationsX != 0 && iterationsX != 1) stepX = maxd(static_cast<double>(frame.cols) / static_cast<double>(iterationsX - 1),0);
+            //offsetSX allows for padding to be computed around the edges of the frame.
+            if(iterationsX != 0 && iterationsX != 1) stepX = maxd(static_cast<double>(frame.cols + (offsetSX * 2)) / static_cast<double>(iterationsX - 1),0);
             else stepX = 0.0;
             // if(iterationsY != 0) stepY = max(std::floor((frame.rows - paddingY) / iterationsY),0);
-            if(iterationsY != 0 && iterationsY != 1) stepY = maxd(static_cast<double>(frame.rows) / static_cast<double>(iterationsY - 1),0);
+            if(iterationsY != 0 && iterationsY != 1) stepY = maxd(static_cast<double>(frame.rows + (offsetSY * 2)) / static_cast<double>(iterationsY - 1),0);
             else stepY = 0.0;
         }
 

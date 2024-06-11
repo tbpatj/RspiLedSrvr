@@ -1,8 +1,10 @@
 void ServeClient() {
-    svr.Get("/", [](const httplib::Request& req, httplib::Response& res) {
-       std::string filepath = "./build/index.html";
 
-         std::ifstream file(filepath, std::ios::in | std::ios::binary);
+    svr.set_mount_point("/static", "./build/static");
+
+    svr.Get(R"((/.*)?)", [](const httplib::Request& req, httplib::Response& res) {
+        std::string filepath = "./build/index.html";
+        std::ifstream file(filepath, std::ios::in | std::ios::binary);
         if (file.is_open()) {
             // Read the content of the HTML file
             std::string file_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -15,6 +17,4 @@ void ServeClient() {
             res.set_content("Not Found", "text/plain");
         }
     });
-
-    svr.set_mount_point("/static", "./build/static");
 }
