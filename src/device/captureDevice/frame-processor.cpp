@@ -10,12 +10,19 @@ class FrameProcessor {
         int paddingY;
         bool process1Pxl = false;
         bool updateStep = false;
-        //(bezel) these offset the start position of the frame mapping, allowing for padding on the edges of screens where if the lights surround an object not directly behind the lights we can account for how far away the lights are from an intended position
+        //bezel is a percentage of how big the bezel is in comparision to the screen width and height
+        double bezelX = 0.0;
+        double bezelY = 0.0;
+        //these offset the start position of the frame mapping, allowing for padding on the edges of screens these are calculated from the bezel ratios
         double offsetSX = 0.0;
         double offsetSY = 0.0;
         //bound offset will change the bounds in which it will process the frame, mainly in use for aspect ratios, so you can take out the black bars on the top and bottom of a 16:9 video
         int boundOffsetX = 0;
         int boundOffsetY = 0;
+
+        float deadzoneDecrease = 38.0;
+        int deadzoneThreshold = 70;
+        float deadzonePower = 3.0;
     
     public:
         //returns true if was able to actually process the frame
@@ -64,8 +71,8 @@ class FrameProcessor {
 
         void initLut(){
                         // Define the threshold and maximum decrease
-            int threshold = 70;
-            float maxDecrease = 38.0;
+            int threshold = deadzoneThreshold;
+            float maxDecrease = deadzoneDecrease;
 
             // Create a lookup table for the V channel adjustment
             cv::Mat lut(1, 256, CV_8U);
@@ -73,7 +80,7 @@ class FrameProcessor {
             for (int i = 0; i < 256; ++i) {
                 if (i < threshold) {
                     float factor = static_cast<float>(threshold - i) / threshold;
-                    float decrease = maxDecrease * std::pow(factor, 3);
+                    float decrease = maxDecrease * std::pow(factor, deadzonePower);
                     p[i] = static_cast<uchar>(std::max(i - static_cast<int>(decrease), 0));
                 } else {
                     p[i] = i;
@@ -198,6 +205,9 @@ class FrameProcessor {
         }
 
         void initStep(cv::Mat frame){
+            //calculate the offsetSX and offsetSY
+            offsetSX = bezelX * static_cast<double>(frame.cols);
+            offsetSY = bezelY * static_cast<double>(frame.rows);
             // if(iterationsX != 0) stepX = max(std::floor((frame.cols - paddingX) / iterationsX),0);
             //sub one from the iterations as we want it to reach the edge of the frame correctly with that amount of items and starting at 0% and ending at 100%
             //offsetSX allows for padding to be computed around the edges of the frame.
@@ -217,7 +227,8 @@ class FrameProcessor {
                     {"padding", {{"x", paddingX},{"y", paddingY}}},
                     {"iterations", {{"x", iterationsX},{"y", iterationsY}}},
                     {"step", {{"x", stepX},{"y", stepY}}},
-                    {"bezel", {{"x", offsetSX},{"y", offsetSY}},
+                    {"bezel", {{"x", bezelX},{"y", bezelY}}},
+                    {"deadzone", {{"decrease", deadzoneDecrease}, {"threshold", deadzoneThreshold}, {"power", deadzonePower}}},
                     {"process1Pxl", process1Pxl}
                 };
             return data;
@@ -234,8 +245,13 @@ class FrameProcessor {
                 newImage = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1), CV_8UC3);
             }
             if(!data["bezel"].is_null()){
-                offsetSX = data["bezel"]["x"].is_null() ? offsetSX : static_cast<double>(data["bezel"]["x"]);
-                offsetSY = data["bezel"]["y"].is_null() ? offsetSY : static_cast<double>(data["bezel"]["y"]);
+                bezelX = data["bezel"]["x"].is_null() ? bezelX : static_cast<double>(data["bezel"]["x"]);
+                bezelY = data["bezel"]["y"].is_null() ? bezelY : static_cast<double>(data["bezel"]["y"]);
+            }
+            if(!data["deadzone"].is_null()){
+                deadzoneDecrease = data["deadzone"]["decrease"].is_null() ? deadzoneDecrease : static_cast<double>(data["deadzone"]["decrease"]);
+                deadzoneThreshold = data["deadzone"]["threshold"].is_null() ? deadzoneThreshold : static_cast<int>(data["deadzone"]["threshold"]);
+                deadzonePower = data["deadzone"]["power"].is_null() ? deadzonePower : static_cast<double>(data["deadzone"]["power"]);
             }
             updateStep = true;
             // name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);

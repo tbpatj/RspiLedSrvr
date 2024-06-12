@@ -51,6 +51,7 @@ class CaptureDevice {
                 updateLastFrameChecks(1);
                 if( cv::waitKey (30) >= 0) return;
                 updateFrame();
+                calcAspectRatio();
             }catch(const std::exception& e){
                 std::cerr << e.what() << std::endl;
                  if(!cap.isOpened()){
@@ -90,9 +91,35 @@ class CaptureDevice {
             }
         }
 
+        bool checkRatio(double curRatio, double w, double h) {
+            double aspectRatio = w / h;
+            if(abs(curRatio - aspectRatio) < 0.05){
+                aspectW = static_cast<int>(w);
+                aspectH = static_cast<int>(h);
+                return true;
+            }
+            return false;
+        }
+
+        void calcAspectRatio(){
+            int cols = frame.cols;
+            int rows = frame.rows;
+            //default to 16 / 9
+            aspectW = 16;
+            aspectH = 9;
+            double ratio = static_cast<double>(cols) / static_cast<double>(rows);
+            checkRatio(ratio, 21, 3);
+            checkRatio(ratio, 1, 1);
+            checkRatio(ratio, 4, 3);
+            checkRatio(ratio, 16, 10);
+            checkRatio(ratio, 32, 9);
+        }
+
         void setAspectRatio(int widthA, int heightA){
             int cols = frame.cols;
             int rows = frame.rows;
+            aspectW = widthA;
+            aspectH = heightA;
             //get the aspect ratio of the current input
             float aspectRatio = static_cast<float>(cols) / static_cast<float>(rows);
             float nAR = static_cast<float>(widthA) / static_cast<float>(heightA);
@@ -221,7 +248,10 @@ class CaptureDevice {
         }
 
         json getJson() {
-            return frameProcessor.getJson();
+            json out = frameProcessor.getJson();
+            out["input"] = {{ "width", frame.cols }, { "height", frame.rows } };
+            out["aspect_ratio"] = std::to_string(aspectW) + ":" + std::to_string(aspectH);
+            return out;
         }
 
         void setData(json data) {

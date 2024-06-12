@@ -25,6 +25,11 @@ private:
         //editor transition
         TransitionObject editorT;
 
+        //timer to power off the device just to refresh the data line
+        std::chrono::milliseconds lastLEDDataUpdate;
+        //the amount of time before each refresh in miliseconds
+        int refresh_rate = 10000;
+
         //testing purposes
         cv::Mat ledImage;
 
@@ -83,6 +88,7 @@ public:
             }
             ledController->render();
         } else if(t.getPercT() < 2.0f){
+            lastLEDDataUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
             //this block of code is in case we turn the power off on the leds we want to transition to power off and make sure they are turned off all the way
             if(t.getPercT() >= 1) t.setPercT(1.0f);  //set the transition percentage to 1 so we don't interpolate between some other value
             for(int i = 0; i < ledCount; i++){
@@ -90,6 +96,10 @@ public:
             }
             if(t.getPercT() >= 1) t.setPercT(3.0f); //if we did reach full power down, make sure to set the percentage to 3 so we don't keep updating the leds in the future
             ledController->render();
+        } else if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()) - lastLEDDataUpdate  > std::chrono::milliseconds(refresh_rate)){
+            //if we haven't updated the leds in a while then we want to refresh the data line
+            ledController->render();
+            lastLEDDataUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         }
         //debug options
         if(show_LEDS){
