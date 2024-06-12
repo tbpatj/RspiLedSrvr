@@ -10,7 +10,7 @@ class FrameProcessor {
         int paddingY;
         bool process1Pxl = false;
         bool updateStep = false;
-        //these offset the start position of the frame mapping, allowing for padding on the edges of screens where if the lights surround an object not directly behind the lights we can account for how far away the lights are from an intended position
+        //(bezel) these offset the start position of the frame mapping, allowing for padding on the edges of screens where if the lights surround an object not directly behind the lights we can account for how far away the lights are from an intended position
         double offsetSX = 0.0;
         double offsetSY = 0.0;
         //bound offset will change the bounds in which it will process the frame, mainly in use for aspect ratios, so you can take out the black bars on the top and bottom of a 16:9 video
@@ -217,6 +217,7 @@ class FrameProcessor {
                     {"padding", {{"x", paddingX},{"y", paddingY}}},
                     {"iterations", {{"x", iterationsX},{"y", iterationsY}}},
                     {"step", {{"x", stepX},{"y", stepY}}},
+                    {"bezel", {{"x", offsetSX},{"y", offsetSY}},
                     {"process1Pxl", process1Pxl}
                 };
             return data;
@@ -232,6 +233,10 @@ class FrameProcessor {
                 iterationsY = data["iterations"]["y"].is_null() ? iterationsY : static_cast<int>(data["iterations"]["y"]);
                 newImage = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1), CV_8UC3);
             }
+            if(!data["bezel"].is_null()){
+                offsetSX = data["bezel"]["x"].is_null() ? offsetSX : static_cast<double>(data["bezel"]["x"]);
+                offsetSY = data["bezel"]["y"].is_null() ? offsetSY : static_cast<double>(data["bezel"]["y"]);
+            }
             updateStep = true;
             // name = data["name"].is_null() ? (name.empty() ? "default" : name) : static_cast<std::string>(data["name"]);
             // deviceType = data["device_type"].is_null() ?  deviceType : data["device_type"] == "addressable" ? 1 : 0;
@@ -241,6 +246,16 @@ class FrameProcessor {
             // //update timings
             // animSpeed = data["animation_speed"].is_null() ? animSpeed : static_cast<long long>(data["animation_speed"]);
             // setMappings(data);
+        }
+
+        void setOffset(double x, double y){
+            offsetSX = x;
+            offsetSY = y;
+        }
+
+        void setBoundOffset(int x, int y){
+            boundOffsetX = x;
+            boundOffsetY = y;
         }
 
         FrameProcessor(cv::Mat frame, int inIterationsX, int inIterationsY) {

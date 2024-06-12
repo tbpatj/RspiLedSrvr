@@ -35,7 +35,7 @@ class CaptureDevice {
             try{
                 numEmptyFrames = 0;
                 // mac open webcam code \/
-                cap.open(0,cv::CAP_AVFOUNDATION);
+                cap.open(0);
                 // cap.open(-1);
                 //check to make sure that the capture was actually opened
                 if(!cap.isOpened()){
@@ -85,22 +85,31 @@ class CaptureDevice {
             now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
             if(isCapturing){
                 cap >> frame;
-                aspectRatio();
                 checkLastFrames();
                 checkSleepTime();
             }
         }
 
         void setAspectRatio(int widthA, int heightA){
-            aspectW = widthA;
-            aspectH = heightA;
-            aspectRatio();
-            frameProcessor.initStep(frame);
+            int cols = frame.cols;
+            int rows = frame.rows;
+            //get the aspect ratio of the current input
+            float aspectRatio = static_cast<float>(cols) / static_cast<float>(rows);
+            float nAR = static_cast<float>(widthA) / static_cast<float>(heightA);
+            if(nAR > aspectRatio){
+                //if the new aspect ratio is wider than the current aspect ratio then we need to get the amount of pixels for the black bar
+                int newRows = cols / nAR;
+                int diff = (rows - newRows) / 2;
+                frameProcessor.setBoundOffset(0, diff);
+            } else if(nAR < aspectRatio){
+                //if the new aspect ratio is taller than the current aspect ratio then we need to crop the top and bottom
+                int newCols = rows * nAR;
+                int diff = (cols - newCols) / 2;
+                frameProcessor.setBoundOffset(diff, 0);
+            } else {
+                frameProcessor.setBoundOffset(0, 0);
+            }
 
-        }
-
-        void aspectRatio(){
-            //by default the aspect ratio is 0,0 which means it will just keep the aspect ratio of the frame
         }
 
         void checkSleepTime(){
