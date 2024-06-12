@@ -13,6 +13,9 @@ class FrameProcessor {
         //these offset the start position of the frame mapping, allowing for padding on the edges of screens where if the lights surround an object not directly behind the lights we can account for how far away the lights are from an intended position
         double offsetSX = 0.0;
         double offsetSY = 0.0;
+        //bound offset will change the bounds in which it will process the frame, mainly in use for aspect ratios, so you can take out the black bars on the top and bottom of a 16:9 video
+        int boundOffsetX = 0;
+        int boundOffsetY = 0;
     
     public:
         //returns true if was able to actually process the frame
@@ -118,8 +121,8 @@ class FrameProcessor {
                 sy = stepY;
                 iterations = iterationsY;
             }
-            int boundCol = frame.cols - 1;
-            int boundRow = frame.rows - 1;
+            int boundCol = frame.cols - 1 - boundOffsetX;
+            int boundRow = frame.rows - 1 - boundOffsetY;
             for(int i = 0; i < iterations; i ++){
                 if(adjustedBox){
                     boxWidth = paddingX * 2;
@@ -129,10 +132,10 @@ class FrameProcessor {
                 x = static_cast<int>(std::floor(centerX)) - boxWidth / 2;
                 y = static_cast<int>(std::floor(centerY)) - boxHeight / 2;
                 //keep the box within the bounds of the frame
-                if(x < 0){
-                    //since x will be negative we will subtract the boxwidth from it so that it crops the roi to the edge of the frame
-                    boxWidth = min(max(boxWidth + x, minBoxWidth), boundCol);
-                    x = 0;
+                if(x < boundOffsetX){
+                    //bind the x value to 0 or the boundOffset if there is one, enabling aspect ratios or to add padding inside the frame and extend colors from inside edges
+                    boxWidth = min(max((boxWidth + x) - boundOffsetX, minBoxWidth), boundCol);
+                    x = boundOffsetX;
                     adjustedBox = true;
                 } else if(x + boxWidth > boundCol){
                     //since x + boxWidth will be greater than the frame width we will subtract the difference from the boxWidth
@@ -140,9 +143,9 @@ class FrameProcessor {
                     x = boundCol - boxWidth;
                     adjustedBox = true;
                 }
-                if(y < 0) {
-                    boxHeight = min(max(boxHeight + y, minBoxHeight), boundRow);
-                    y=0;
+                if(y < boundOffsetY) {
+                    boxHeight = min(max((boxHeight + y) - boundOffsetY, minBoxHeight), boundRow);
+                    y=boundOffsetY;
                     adjustedBox = true;
                 } else if(y + boxHeight > boundRow){
                     boxHeight = min(max(boxHeight - ((y + boxHeight) - boundRow), boxHeight), boundRow); 

@@ -36,7 +36,6 @@ public:
     void update() override {
         updateTiming();
         if(settings.power){
-            //-1 is the tv mode
             if(editIndex >= 0){
                 if(settings.mode == -1){
                     using_webcam = true;
@@ -44,8 +43,10 @@ public:
                     a.setAnimIndx(0);
                     updateFromImageAnimation();
                 }
+                int sI = settings.mappings[editIndex].ledSIndx;
+                int eI = settings.mappings[editIndex].ledEIndx;
                 for(int i = 0; i < ledCount; i++){
-                    if(i >= settings.mappings[editIndex].ledSIndx && i <= settings.mappings[editIndex].ledEIndx){
+                    if((i >= sI && i <= eI) || (i >= eI && i <= sI)){
                         if(settings.mode != -1){
                             updateLED(i, 255, 255, 255);
                         }
