@@ -8,8 +8,15 @@ class CaptureDevice {
         int numEmptyFrames = 0;
         FrameProcessor frameProcessor;
         int last_frame_checks = 1;
+        
         int aspectW = 0;
         int aspectH = 0;
+        int screenTruthW = 16;
+        int screenTruthH = 9;
+
+        //bezel is a percentage of how big the bezel is in comparision to the screen width and height
+        double bezelX = 0.0;
+        double bezelY = 0.0;
         //time since last frame change
         std::chrono::milliseconds timeSLFC;
         std::chrono::milliseconds now;
@@ -51,7 +58,6 @@ class CaptureDevice {
                 updateLastFrameChecks(1);
                 if( cv::waitKey (30) >= 0) return;
                 updateFrame();
-                calcAspectRatio();
             }catch(const std::exception& e){
                 std::cerr << e.what() << std::endl;
                  if(!cap.isOpened()){
@@ -121,22 +127,52 @@ class CaptureDevice {
             aspectW = widthA;
             aspectH = heightA;
             //get the aspect ratio of the current input
-            float aspectRatio = static_cast<float>(cols) / static_cast<float>(rows);
-            float nAR = static_cast<float>(widthA) / static_cast<float>(heightA);
-            if(nAR > aspectRatio){
+            //create a truth aspect ratio, as the current input frame may be incorrect. We may be stretching the image to fit the screen
+            double screenTruthRatio = 16.0/9.0;
+            int truthCols = rows * screenTruthRatio;
+            int truthRows = cols / screenTruthRatio;
+            // float aspectRatio = static_cast<float>(cols) / static_cast<float>(rows);
+            double nAR = static_cast<double>(widthA) / static_cast<double>(heightA);
+            // std::cout << "screentruth " << screenTruthRatio << " Truth Cols: " << truthCols << " Truth Rows: " << truthRows << " nAR " << nAR << " Capture Cols: " << cols << " Capture Rows: " << rows << "\n" << std::endl;
+            if(nAR > screenTruthRatio){
                 //if the new aspect ratio is wider than the current aspect ratio then we need to get the amount of pixels for the black bar
-                int newRows = cols / nAR;
+                int newRows = truthCols / nAR;
                 int diff = (rows - newRows) / 2;
                 frameProcessor.setBoundOffset(0, diff);
-            } else if(nAR < aspectRatio){
+            } else if(nAR < screenTruthRatio){
                 //if the new aspect ratio is taller than the current aspect ratio then we need to crop the top and bottom
-                int newCols = rows * nAR;
+                int newCols = truthRows * nAR;
                 int diff = (cols - newCols) / 2;
+                // std::cout << "diff " << diff << " newCols " << newCols << std::endl;
                 frameProcessor.setBoundOffset(diff, 0);
             } else {
                 frameProcessor.setBoundOffset(0, 0);
             }
+        }
 
+        void calcBezel(){
+            int cols = frame.cols;
+            int rows = frame.rows;
+            double truthAspectRatio = static_cast<double>(screenTruthW) / static_cast<double>(screenTruthH);
+            double captureAspectRatio = static_cast<double>(cols) / static_cast<double>(rows);
+            if(truthAspectRatio > captureAspectRatio){
+                int nCols = rows * truthAspectRatio;
+                double diff = static_cast<double>(cols) / static_cast<double>(nCols);
+                double nBezelX = bezelX * diff;
+                frameProcessor.setBezelScaled(nBezelX, bezelY);
+            } else if(truthAspectRatio < captureAspectRatio){
+                int nRows = cols / truthAspectRatio;
+                double diff = static_cast<double>(rows) / static_cast<double>(nRows);
+                double nBezelY = bezelY * diff;
+                frameProcessor.setBezelScaled(bezelX, nBezelY);
+            }
+        }
+
+        void setScreenTruth(int w, int h){
+            screenTruthW = w;
+            screenTruthH = h;
+            calcBezel();
+            setAspectRatio(aspectW,aspectH);
         }
 
         void checkSleepTime(){
@@ -251,10 +287,26 @@ class CaptureDevice {
             json out = frameProcessor.getJson();
             out["input"] = {{ "width", frame.cols }, { "height", frame.rows } };
             out["aspect_ratio"] = std::to_string(aspectW) + ":" + std::to_string(aspectH);
+            out["truth_aspect_ratio"] = {{"x", screenTruthW}, {"y", screenTruthH}};
+            out["bezel"] =  {{"x", bezelX},{"y", bezelY}};
             return out;
         }
 
         void setData(json data) {
+             if(!data["truth_aspect_ratio"].is_null()){
+                screenTruthW = data["truth_aspect_ratio"]["x"].is_null() ? screenTruthW : static_cast<int>(data["truth_aspect_ratio"]["x"]);
+                screenTruthH = data["truth_aspect_ratio"]["y"].is_null() ? screenTruthH : static_cast<int>(data["truth_aspect_ratio"]["y"]);
+                setScreenTruth(screenTruthW, screenTruthH);
+                if(aspectW == 0 && aspectH == 0){
+                    setAspectRatio(screenTruthW,screenTruthH);
+                }
+            }
+            if(!data["bezel"].is_null()){
+                std::cout << "bezel change" << std::endl;
+                bezelX = data["bezel"]["x"].is_null() ? bezelX : static_cast<double>(data["bezel"]["x"]);
+                bezelY = data["bezel"]["y"].is_null() ? bezelY : static_cast<double>(data["bezel"]["y"]);
+                calcBezel();
+            }
             frameProcessor.setData(data);
         }
 

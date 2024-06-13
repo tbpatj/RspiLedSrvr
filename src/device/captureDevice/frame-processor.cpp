@@ -10,12 +10,13 @@ class FrameProcessor {
         int paddingY;
         bool process1Pxl = false;
         bool updateStep = false;
-        //bezel is a percentage of how big the bezel is in comparision to the screen width and height
-        double bezelX = 0.0;
-        double bezelY = 0.0;
+        
         //these offset the start position of the frame mapping, allowing for padding on the edges of screens these are calculated from the bezel ratios
         double offsetSX = 0.0;
         double offsetSY = 0.0;
+
+        double bezelScaledX = 0.0;
+        double bezelScaledY = 0.0;
         //bound offset will change the bounds in which it will process the frame, mainly in use for aspect ratios, so you can take out the black bars on the top and bottom of a 16:9 video
         int boundOffsetX = 0;
         int boundOffsetY = 0;
@@ -206,8 +207,8 @@ class FrameProcessor {
 
         void initStep(cv::Mat frame){
             //calculate the offsetSX and offsetSY
-            offsetSX = bezelX * static_cast<double>(frame.cols);
-            offsetSY = bezelY * static_cast<double>(frame.rows);
+            offsetSX = bezelScaledX * static_cast<double>(frame.cols);
+            offsetSY = bezelScaledY * static_cast<double>(frame.rows);
             // if(iterationsX != 0) stepX = max(std::floor((frame.cols - paddingX) / iterationsX),0);
             //sub one from the iterations as we want it to reach the edge of the frame correctly with that amount of items and starting at 0% and ending at 100%
             //offsetSX allows for padding to be computed around the edges of the frame.
@@ -227,7 +228,6 @@ class FrameProcessor {
                     {"padding", {{"x", paddingX},{"y", paddingY}}},
                     {"iterations", {{"x", iterationsX},{"y", iterationsY}}},
                     {"step", {{"x", stepX},{"y", stepY}}},
-                    {"bezel", {{"x", bezelX},{"y", bezelY}}},
                     {"deadzone", {{"decrease", deadzoneDecrease}, {"threshold", deadzoneThreshold}, {"power", deadzonePower}}},
                     {"process1Pxl", process1Pxl}
                 };
@@ -243,10 +243,6 @@ class FrameProcessor {
                 iterationsX = data["iterations"]["x"].is_null() ? iterationsX : static_cast<int>(data["iterations"]["x"]);
                 iterationsY = data["iterations"]["y"].is_null() ? iterationsY : static_cast<int>(data["iterations"]["y"]);
                 newImage = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1), CV_8UC3);
-            }
-            if(!data["bezel"].is_null()){
-                bezelX = data["bezel"]["x"].is_null() ? bezelX : static_cast<double>(data["bezel"]["x"]);
-                bezelY = data["bezel"]["y"].is_null() ? bezelY : static_cast<double>(data["bezel"]["y"]);
             }
             if(!data["deadzone"].is_null()){
                 deadzoneDecrease = data["deadzone"]["decrease"].is_null() ? deadzoneDecrease : static_cast<double>(data["deadzone"]["decrease"]);
@@ -267,6 +263,12 @@ class FrameProcessor {
         void setOffset(double x, double y){
             offsetSX = x;
             offsetSY = y;
+        }
+
+        void setBezelScaled(double x, double y){
+            bezelScaledX = x;
+            bezelScaledY = y;
+            updateStep = true;
         }
 
         void setBoundOffset(int x, int y){
