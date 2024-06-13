@@ -31,10 +31,10 @@ void InitDeleteAnimation() {
         //attempt to delete the actual file
         bool deleted = false;
         try {
-            std::__fs::filesystem::remove("./resources/animations/" + animations[found].getName() + animations[found].getExtension());
+            std::experimental::filesystem::remove("./resources/animations/" + animations[found].getName() + animations[found].getExtension());
             std::cout << "File deleted successfully." << std::endl;
             deleted = true;
-        } catch (const std::__fs::filesystem::filesystem_error& e) {
+        } catch (const std::experimental::filesystem::filesystem_error& e) {
             std::cerr << "Error deleting file: " << e.what() << std::endl;
         }
         //if it failed to delete the file return back to the user.

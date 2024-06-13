@@ -1,4 +1,4 @@
-#include <filesystem>
+#include <experimental/filesystem>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,10 +13,10 @@ using json = nlohmann::json;
 
 
 //Debug varaibles
-const bool show_processed_image = true;
+const bool show_processed_image = false;
 const bool show_webcam_feed = false;
-const bool show_LEDS = true;
-const bool show_animation = true;
+const bool show_LEDS = false;
+const bool show_animation = false;
 const bool write_frame_proccessor_data = false;
 
 //Capture device variable
