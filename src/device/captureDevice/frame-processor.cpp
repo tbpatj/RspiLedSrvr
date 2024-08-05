@@ -6,10 +6,13 @@ class FrameProcessor {
         double stepY;
         cv::Mat newImage;
         cv::Mat processingLut;
+        cv::Mat debug_output_image;
         int paddingX;
         int paddingY;
         bool process1Pxl = false;
         bool updateStep = false;
+
+        int debug_output = -1;
         
         //these offset the start position of the frame mapping, allowing for padding on the edges of screens these are calculated from the bezel ratios
         double offsetSX = 0.0;
@@ -44,6 +47,10 @@ class FrameProcessor {
 
                 if(process1Pxl){
                    cv::Scalar averageColor = cv::mean(newImage);
+                }
+                if(debug_output >= 0 && debug_output < 1020){
+                    debug_output_image.row(debug_output) = newImage.row(0);
+                    debug_output++;
                 }
                 return true;
             }
@@ -274,6 +281,15 @@ class FrameProcessor {
         void setBoundOffset(int x, int y){
             boundOffsetX = x;
             boundOffsetY = y;
+        }
+
+        void startDebugImage(int type){
+            debug_output_image = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1020),type);
+            debug_output = 0;
+        }
+        cv::Mat stopDebugImage() {
+            debug_output = -5;
+            return debug_output_image;
         }
 
         FrameProcessor(cv::Mat frame, int inIterationsX, int inIterationsY) {

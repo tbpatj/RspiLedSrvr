@@ -182,6 +182,17 @@ class CaptureDevice {
                 tv_sleeping = false;
             }
         }
+
+        bool startDebugImage(){
+            if(isCapturing){
+                frameProcessor.startDebugImage(frame.type());
+                return true;
+            }
+            return false;
+        }
+        cv::Mat stopDebugImage() {
+            return frameProcessor.stopDebugImage();
+        }
         
         bool checkIfSignal(int index){
             int randomX =  last_frame_pixel_locations[index][0];
