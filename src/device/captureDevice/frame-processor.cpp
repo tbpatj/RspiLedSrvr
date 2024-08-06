@@ -48,8 +48,8 @@ class FrameProcessor {
                 if(process1Pxl){
                    cv::Scalar averageColor = cv::mean(newImage);
                 }
-                if(debug_output >= 0 && debug_output < 1020){
-                    debug_output_image.row(debug_output) = newImage.row(0);
+                if(debug_output >= 0 && debug_output < 120){
+                    newImage.row(0).copyTo(debug_output_image.row(debug_output));
                     debug_output++;
                 }
                 return true;
@@ -284,7 +284,7 @@ class FrameProcessor {
         }
 
         void startDebugImage(int type){
-            debug_output_image = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,1020),type);
+            debug_output_image = cv::Mat::zeros(cv::Size(iterationsX * 2 + iterationsY * 2,120),type);
             debug_output = 0;
         }
         cv::Mat stopDebugImage() {

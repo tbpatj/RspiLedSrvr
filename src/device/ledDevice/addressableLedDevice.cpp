@@ -33,6 +33,10 @@ private:
         //testing purposes
         cv::Mat ledImage;
 
+        //debug options
+        int debug_output = -1;
+        cv::Mat debug_output_image;
+
         int editIndex = -1;
 
 public:
@@ -110,6 +114,10 @@ public:
                     return;
                 };
             }
+        }
+        //debug output
+        if(debug_output >= 0 && debug_output < 120){
+            debug_output ++;
         }
     }
 
@@ -275,6 +283,7 @@ public:
         } else leds[index] = color;
         ledController->setLEDColor(index, leds[index]);
         //debug option to show the leds in an image
+        if(debug_output >= 0 && debug_output < 120) updateDebugOutputPixel(index, leds[index]);
         if(show_LEDS) updateDebugPixel(index, leds[index]);
     }
 
@@ -286,6 +295,7 @@ public:
         } else leds[index] = (r << 16) | (g << 8) | (b);
         ledController->setLEDColor(index, leds[index]);
         //debug option to show the leds in an image
+        if(debug_output >= 0 && debug_output < 120) updateDebugOutputPixel(index, leds[index]);
         if(show_LEDS) updateDebugPixel(index, leds[index]);
     }
 
@@ -423,5 +433,24 @@ public:
         pixel[0] = b; // Blue channel
         pixel[1] = g; // Green channel
         pixel[2] = r; // Red channel
+    }
+
+    void updateDebugOutputPixel(int index, int color){
+        cv::Vec3b& pixel = debug_output_image.at<cv::Vec3b>(debug_output,index);
+        int r = static_cast<int>((leds[index] >> 16) & 0xff);
+        int g =  static_cast<int>((leds[index] >> 8) & 0xff);
+        int b =  static_cast<int>(leds[index] & 0xff);
+        pixel[0] = b; // Blue channel
+        pixel[1] = g; // Green channel
+        pixel[2] = r; // Red channel
+    }
+
+    void startDebugOutput() override {
+        debug_output = 0;
+        debug_output_image = cv::Mat::zeros(cv::Size(ledCount,120), CV_8UC3);
+    }
+    cv::Mat stopDebugOutput() override {
+        debug_output = -1;
+        return debug_output_image;
     }
 };

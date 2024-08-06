@@ -10,7 +10,6 @@
 #include "./resources/json.hpp"
 using json = nlohmann::json;
 #include "./resources/httplib.h"
-#include "./src/utils/base-64.cpp"
 
 
 //Debug varaibles

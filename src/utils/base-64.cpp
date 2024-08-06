@@ -43,3 +43,10 @@ std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len) {
 
     return ret;
 }
+std::string convertMatToBase64(cv::Mat image) {
+    // Convert image to base64-encoded string
+    std::vector<uchar> buffer;
+    cv::imencode(".jpg", image, buffer);
+    std::string imageBase64 = base64_encode(buffer.data(), buffer.size());
+    return imageBase64;
+}

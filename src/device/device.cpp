@@ -33,6 +33,14 @@ class Device {
             
         }
 
+        virtual void startDebugOutput() {
+
+        }
+
+        virtual cv::Mat stopDebugOutput() {
+            return cv::Mat();
+        }
+
         virtual int usingTV(){
             return 0;
         }
