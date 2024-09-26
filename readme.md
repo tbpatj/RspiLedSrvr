@@ -69,3 +69,6 @@ git checkout functioning-leds
 git rebase -i main
 -resolve conflicts, that don't involve the experimental::filesystem and that don't involve the ws2811 stuff
 ```
+
+### TODO
+- update methods to use pointers, instead of passing images around and creating copies everytime it goes through a function call. It should be using a pointer to the images
